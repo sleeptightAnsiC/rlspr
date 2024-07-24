@@ -1,0 +1,16 @@
+tmp
+bin
+compile_commands.json
+compile_flags.txt
+.cache
+.ccls
+.ccls-cache
+*.out
+*.gch
+*.obj
+*.exe
+*.o
+*.so
+*.pdb
+*.wasm
+*.js

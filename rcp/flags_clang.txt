@@ -1,0 +1,4 @@
+@./rcp/flags_gcc.txt
+-Wno-unknown-warning-option
+-Wno-unknown-pragmas
+-Wno-pointer-to-enum-cast

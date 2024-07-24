@@ -1,0 +1,11 @@
+cc
+c99
+gcc
+clang
+tcc
+musl-gcc
+musl-clang
+winegcc
+i686-w64-mingw32-gcc
+x86_64-w64-mingw32-gcc
+icx

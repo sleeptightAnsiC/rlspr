@@ -1,0 +1,7 @@
+/nologo
+/std:c11
+/Wall
+/wd4068
+/wd4668
+/wd4820
+/wd5045
