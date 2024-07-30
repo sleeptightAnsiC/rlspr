@@ -1,0 +1,8 @@
+gdb
+--nx
+--quiet
+--batch
+--eval-command 'set debuginfod enabled on'
+--eval-command 'run'
+--eval-command 'backtrace'
+--eval-command 'quit'
