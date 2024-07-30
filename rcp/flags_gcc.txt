@@ -1,7 +1,4 @@
--std=c99
--O0
--ggdb3
--pipe
+@./rcp/flags_cc.txt
 -Werror
 -Wall
 -Wextra

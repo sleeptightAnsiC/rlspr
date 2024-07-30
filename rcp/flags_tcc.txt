@@ -1,7 +1,6 @@
--std=c99
--Wimplicit-function-declaration
--Wdiscarded-qualifiers
--g
+@./rcp/flags_cc.txt
 -b
 -bt
+-Wimplicit-function-declaration
+-Wdiscarded-qualifiers
 -Wwrite-strings

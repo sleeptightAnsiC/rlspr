@@ -1,3 +1,8 @@
+# TODO
+- those files has been taken from mtpl project, clean them up later
+- raylib has been provided via pacman, I need to build and link it manually
+
+
 # rlspr
 Simple clone of classic WindowsNT's Minesweeper game, written in C99 with Raylib.
 I was looking for a reason to try Raylib for a long time and recently,

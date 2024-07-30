@@ -1,44 +1,71 @@
 #include <raylib.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
-int main(void)
+
+
+
+#define NUM 10
+
+
+int
+main(void)
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+	int border = 1;
+	int scale = 50;
+	int width = (NUM + 2) * scale;
+	int height = width;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
+	SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
+	InitWindow(width, height, "rlspr");
+	assert(IsWindowReady());
 
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
+	while (!WindowShouldClose())
+	{
+		BeginDrawing();
+		ClearBackground(GRAY);
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
+		// draw cells
+		for (int i = 0; i <= NUM + 1; ++i) {
+			const int stride = scale * i;
+			const int startPos = border * scale;
+			const int endPos = NUM * scale + startPos;
+			DrawLine(startPos, stride, endPos, stride, DARKGRAY);
+			DrawLine(stride, startPos, stride, endPos, DARKGRAY);
+		}
 
-            ClearBackground(RAYWHITE);
+		const int mouseX = GetMouseX();
+		const int mouseY = GetMouseY();
 
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+		// highlight currently hovered cell
+		if (
+			true
+			&& mouseX <= (border + NUM) * scale
+			&& mouseX >= border * scale
+			&& mouseY <= (border + NUM) * scale
+			&& mouseY >= border * scale
+		) {
+			const int posX = (int)(mouseX / scale) * scale;
+			const int posY = (int)(mouseY / scale) * scale;
+			DrawRectangleLines(posX, posY, scale, scale, BLACK);
+			SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+		} else {
+			SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+		}
 
-        EndDrawing();
-        //----------------------------------------------------------------------------------
-    }
+		{
+			float mouseWheelMove = GetMouseWheelMove();
+			scale += (int)mouseWheelMove;
+		}
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+		// const int x = GetRenderWidth()/2;
+		// const int y = GetRenderHeight()/2;
 
-    return 0;
+		EndDrawing();
+	}
+	CloseWindow();
+
+	return 0;
 }

@@ -1,6 +1,7 @@
 
+CC = cc
 # CC = c99
-CC = gcc
+# CC = gcc
 # CC = clang
 # CC = tcc
 
@@ -12,7 +13,8 @@ SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
 EXE = $(BINDIR)/mtpl
 
-CFLAGS = @./$(RCPDIR)/flags_gcc.txt
+CFLAGS = @./$(RCPDIR)/flags_cc.txt
+# CFLAGS = @./$(RCPDIR)/flags_gcc.txt
 # CFLAGS = @./$(RCPDIR)/flags_clang.txt
 # CFLAGS = @./$(RCPDIR)/flags_tcc.txt
 
