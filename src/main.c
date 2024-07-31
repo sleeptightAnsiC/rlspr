@@ -114,15 +114,15 @@ cell_plant(struct CellArr *arr, int x, int y)
 
 #define NUM 10
 
-#define X_NUMBERS_COLORS_MAP() \
-        X(1, BLUE)             \
-        X(2, GREEN)            \
-        X(3, RED)              \
-        X(4, DARKBLUE)         \
-        X(5, MAROON)           \
-        X(6, SKYBLUE)          \
-        X(7, PURPLE)           \
-        X(6, DARKPURPLE)       \
+#define X_NUMBERS_COLORS_MAP \
+        X(1, BLUE)           \
+        X(2, GREEN)          \
+        X(3, RED)            \
+        X(4, DARKBLUE)       \
+        X(5, MAROON)         \
+        X(6, SKYBLUE)        \
+        X(7, PURPLE)         \
+        X(8, DARKPURPLE)     \
 
 int
 main(void)
@@ -157,13 +157,41 @@ main(void)
 			scale += (int)mouseWheelMove;
 		}
 
-		// draw blank cells
+		// draw cell borders
 		for (int i = 0; i <= NUM + 1; ++i) {
 			const int stride = scale * i;
 			const int startPos = border * scale;
 			const int endPos = NUM * scale + startPos;
 			DrawLine(startPos, stride, endPos, stride, DARKGRAY);
 			DrawLine(stride, startPos, stride, endPos, DARKGRAY);
+		}
+
+		// draw cell contents
+		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
+			const struct CellState *curr = cell_get(&cells, x, y);
+			if (curr->planted) {
+				const int scale_half = (int)((float)(scale) * 0.5f);
+				const int center_x = scale * (x + border) + scale_half;
+				const int center_y = scale * (y + border) + scale_half;
+				const float radius = (float)(scale_half) * 0.8f;
+				DrawCircleLines(center_x, center_y, radius, DARKPURPLE);
+			}
+			else switch (curr->nearby)
+			{
+#			define X(NUM, COLOR)                                                           \
+			case NUM: {                                                                    \
+			        const int pos_x = scale * (x + border) + (int)(0.3f * (float)(scale)); \
+			        const int pos_y = scale * (y + border) + (int)(0.1f * (float)(scale)); \
+			        DrawText(#NUM, pos_x, pos_y, scale, COLOR);                            \
+			        break;                                                                 \
+			        }                                                                      
+			X_NUMBERS_COLORS_MAP
+#			undef X
+			case 0:
+				break;
+			default:
+				UTIL_UNREACHABLE();
+			}
 		}
 
 		const int mouse_x = GetMouseX();
@@ -183,22 +211,6 @@ main(void)
 			SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
 		} else {
 			SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-		}
-
-		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
-			const struct CellState *curr = cell_get(&cells, x, y);
-			if (curr->planted) {
-				const int scale_half = (int)((float)(scale) * 0.5f);
-				const int center_x = (scale * (x + border) + scale_half);
-				const int center_y = (scale * (y + border) + scale_half);
-				const float radius = (float)(scale_half) * 0.8f;
-				DrawCircleLines(center_x, center_y, radius, DARKPURPLE);
-			}
-// 			else switch (curr->nearby)
-// 			{
-// 			default: UTIL_UNREACHABLE();
-// #			define X(NUM, COLOR) DrawText(#NUM, )
-// 			}
 		}
 
 		DrawFPS(0, 0);
