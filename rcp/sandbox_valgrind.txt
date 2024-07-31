@@ -1,0 +1,4 @@
+valgrind
+--quiet
+--leak-check=full
+--show-error-list=all

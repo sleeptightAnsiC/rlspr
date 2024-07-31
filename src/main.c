@@ -177,8 +177,8 @@ main(void)
 			&& mouse_y <= (border + NUM) * scale
 			&& mouse_y >= border * scale
 		) {
-			const int pos_x = (int)(mouse_x / scale) * scale;
-			const int pos_y = (int)(mouse_y / scale) * scale;
+			const int pos_x = (mouse_x / scale) * scale;
+			const int pos_y = (mouse_y / scale) * scale;
 			DrawRectangleLines(pos_x, pos_y, scale, scale, BLACK);
 			SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
 		} else {
@@ -188,10 +188,10 @@ main(void)
 		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
 			const struct CellState *curr = cell_get(&cells, x, y);
 			if (curr->planted) {
-				const int scale_half = (int)(scale * 0.5);
-				const int center_x = scale * (x + border) + scale_half;
-				const int center_y = scale * (y + border) + scale_half;
-				const float radius = (float)(scale_half * 0.8);
+				const int scale_half = (int)((float)(scale) * 0.5f);
+				const int center_x = (scale * (x + border) + scale_half);
+				const int center_y = (scale * (y + border) + scale_half);
+				const float radius = (float)(scale_half) * 0.8f;
 				DrawCircleLines(center_x, center_y, radius, DARKPURPLE);
 			}
 // 			else switch (curr->nearby)

@@ -1,7 +1,7 @@
 
-CC = cc
+# CC = cc
 # CC = c99
-# CC = gcc
+CC = gcc
 # CC = clang
 # CC = tcc
 
@@ -10,18 +10,18 @@ SRCDIR = ./src
 TMPDIR = ./tmp/$(CC)
 BINDIR = ./bin/$(CC)
 RAYDIR = ./lib/raylib/src
+
 SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
 EXE = $(BINDIR)/rlspr
 
-CFLAGS = @./$(RCPDIR)/flags_cc.txt
-# CFLAGS = @./$(RCPDIR)/flags_gcc.txt
+# CFLAGS = @./$(RCPDIR)/flags_cc.txt
+CFLAGS = @./$(RCPDIR)/flags_gcc.txt
 # CFLAGS = @./$(RCPDIR)/flags_clang.txt
 # CFLAGS = @./$(RCPDIR)/flags_tcc.txt
 
-SANDBOX = gdb --nx --quiet --batch --eval-command 'set debuginfod enabled on' --eval-command 'run' --eval-command 'backtrace' --eval-command 'quit'
-# SANDBOX = valgrind --leak-check=full --show-error-list=all --quiet
-# SANDBOX = wine
+SANDBOX = $(shell cat $(RCPDIR)/sandbox_gdb.txt)
+# SANDBOX = $(shell cat $(RCPDIR)/sandbox_valgrind.txt)
 
 
 ### main targets:
@@ -50,8 +50,9 @@ always: ;
 $(EXE): $(TMPDIR)/Makefile.mk $(TMPDIR)/raylib.txt always
 	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS)" EXE='$(EXE)' --file='$<'
 
+.PRECIOUS: $(TMPDIR)/raylib%
 $(TMPDIR)/raylib.txt: $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
-	$(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C $(RAYDIR)
+	env -u CFLAGS $(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C $(RAYDIR)
 	\
 	for ro in $$(ls $(RAYDIR)/*.o); do \
 		cp -f $$ro $(TMPDIR)/raylib_$$(basename $$ro); \
@@ -73,7 +74,6 @@ $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -MM $^ >> $@ || (rm $@ && exit 1)
 	echo "	\$$(CC) \$$(CFLAGS) -c \$$< -o \$$@" >> $@
 
-# WARN: raylib's objs are hardcoded here
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
 	echo "\$$(EXE): $(OBJS)" > $@
 	echo "	\$$(CC) \$$(CFLAGS) $(TMPDIR)/raylib_*.o -lm \$$^ -o \$$@" >> $@
