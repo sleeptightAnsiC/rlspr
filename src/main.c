@@ -1,10 +1,10 @@
-#include <raylib.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include "./util.h"
+#include "raylib.h"
 
 struct CellState {
 	uint8_t nearby : 4;
