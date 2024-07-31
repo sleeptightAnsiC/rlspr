@@ -39,8 +39,6 @@ build:  $(TMPDIR) $(BINDIR) compile_commands.json $(EXE)
 .PHONY: clean
 clean:
 	rm -fr $(shell cat .gitignore)
-	$(MAKE) clean -C './lib/raylib/src'
-	cd './lib/raylib' && git restore .
 
 
 ### generic sub-targets (called by main targets):
@@ -48,16 +46,19 @@ clean:
 .PHONY: always
 always: ;
 
-$(EXE): $(TMPDIR)/Makefile.mk raylib always
+$(EXE): $(TMPDIR)/Makefile.mk $(TMPDIR)/raylib.txt always
 	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS)" EXE='$(EXE)' --file='$<'
 
-# TODO: we should move all raylib's build artifacts into TMPDIR
-# and clean raylib directories afterwards, so it will integrate better
-# while using multiple C compilers
-# WARN: also seems like raylib's .gitignore isn't ignoring some reproducable files...
-.PHONY: raylib
-raylib: always
-	$(MAKE) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C './lib/raylib/src'
+$(TMPDIR)/raylib.txt: $(shell ls -rd lib/raylib/** lib/raylib/**/**)
+	$(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C './lib/raylib/src'
+	\
+	for ro in $$(ls lib/raylib/src/*.o); do \
+		cp -f $$ro $(TMPDIR)/raylib_$$(basename $$ro); \
+	done \
+	;
+	$(MAKE) clean -C './lib/raylib/src'
+	cd './lib/raylib' && git restore .
+	echo "This file indicates that raylib has been built." > $(TMPDIR)/raylib.txt
 
 .PRECIOUS: $(TMPDIR)/%.mk
 $(TMPDIR)/%.mk: $(SRCDIR)/%.c
@@ -68,7 +69,8 @@ $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 # WARN: raylib's objs are hardcoded here
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
 	echo "\$$(EXE): $(OBJS)" > $@
-	echo "	\$$(CC) \$$(CFLAGS) ./lib/raylib/src/*.o -lm \$$^ -o \$$@" >> $@
+	echo "	\$$(CC) \$$(CFLAGS) $(TMPDIR)/raylib_*.o -lm \$$^ -o \$$@" >> $@
+	\
 	for file in $^; do \
 		echo "" >> $@; \
 		cat $$file >> $@; \
@@ -80,6 +82,7 @@ $(TMPDIR) $(BINDIR): $@
 
 compile_commands.json: $(SRCS)
 	echo "[" > $@
+	\
 	for file in $^; do \
 		echo "	{" >> $@; \
 		echo "		\"file\": \"$$file\"," >> $@; \
