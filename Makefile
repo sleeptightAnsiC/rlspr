@@ -28,17 +28,17 @@ SANDBOX = gdb --nx --quiet --batch --eval-command 'set debuginfod enabled on' --
 .PHONY: default
 default: run
 
-.PHONY: help
-help:
-	@echo "Following Makefile rules are available:"
-	@echo "        help         (default) print *this* message"
-	@echo "        build        build all translation units and executable"
-	@echo "        run          run executable"
-	@echo "        clean        clean all build artifacts and temporary files"
-	@echo "Example usage:"
-	@echo "        $$ make run CC=clang CFLAGS=@./rcp/flags_clang.txt"
-	@echo "Using Makefile is optional, one can always compile sorce tree manually via:"
-	@echo "        $$ c99 src/**.c"
+# .PHONY: help
+# help:
+# 	@echo "Following Makefile rules are available:"
+# 	@echo "        help         (default) print *this* message"
+# 	@echo "        build        build all translation units and executable"
+# 	@echo "        run          run executable"
+# 	@echo "        clean        clean all build artifacts and temporary files"
+# 	@echo "Example usage:"
+# 	@echo "        $$ make run CC=clang CFLAGS=@./rcp/flags_clang.txt"
+# 	@echo "Using Makefile is optional, one can always compile sorce tree manually via:"
+# 	@echo "        $$ c99 src/**.c"
 
 .PHONY: run
 run: build
@@ -51,6 +51,9 @@ build:  $(TMPDIR) $(BINDIR) compile_commands.json $(EXE)
 .PHONY: clean
 clean:
 	rm -fr $(shell cat .gitignore)
+	$(MAKE) clean --file='./lib/raylib/src/Makefile'
+	cd './lib/raylib'
+	git restore .
 
 
 ### generic sub-targets (called by main targets):
@@ -58,8 +61,11 @@ clean:
 .PHONY: always
 always: ;
 
-$(EXE): $(TMPDIR)/Makefile.mk always
-	$(MAKE) CC='$(CC)' CFLAGS='$(CFLAGS)' EXE='$(EXE)' --file='$<'
+$(EXE): $(TMPDIR)/Makefile.mk ./lib/raylib/src/libraylib.a always
+	$(MAKE) CC='$(CC)' CFLAGS='$(CFLAGS) ./lib/raylib/src/libraylib.a -lm' EXE='$(EXE)' --file='$<'
+
+./lib/raylib/src/libraylib.a: always
+	$(MAKE) -j --file='./lib/raylib/src/Makefile'
 
 # TODO: '|| (rm $@ && exit 1)' is a bit ugly but we have to use it
 #       because tcc does not support gcc's '-MT'

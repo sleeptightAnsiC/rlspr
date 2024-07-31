@@ -8,7 +8,7 @@
 
 #define UTIL_ASSERT(COND) assert(COND)
 
-#define UTIL_UNREACH() do{ assert("This code should never be reached!" == 0); } while (0)
+#define UTIL_UNREACHABLE() do{ assert("This code should never be reached!" == 0); } while (0)
 
 #define UTIL_ARRNUM(ARR) (sizeof(ARR)/sizeof(ARR[0]))
 
