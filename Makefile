@@ -9,6 +9,7 @@ RCPDIR = ./rcp
 SRCDIR = ./src
 TMPDIR = ./tmp/$(CC)
 BINDIR = ./bin/$(CC)
+RAYDIR = ./lib/raylib/src
 SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
 EXE = $(BINDIR)/rlspr
@@ -49,16 +50,22 @@ always: ;
 $(EXE): $(TMPDIR)/Makefile.mk $(TMPDIR)/raylib.txt always
 	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS)" EXE='$(EXE)' --file='$<'
 
-$(TMPDIR)/raylib.txt: $(shell ls -rd lib/raylib/** lib/raylib/**/**)
-	$(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C './lib/raylib/src'
+$(TMPDIR)/raylib.txt: $(RAYDIR) $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
+	$(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C $(RAYDIR)
 	\
-	for ro in $$(ls lib/raylib/src/*.o); do \
+	for ro in $$(ls $(RAYDIR)/*.o); do \
 		cp -f $$ro $(TMPDIR)/raylib_$$(basename $$ro); \
 	done \
 	;
-	$(MAKE) clean -C './lib/raylib/src'
-	cd './lib/raylib' && git restore .
+	$(MAKE) clean -C $(RAYDIR)
+	cd $(RAYDIR) && git restore .
 	echo "This file indicates that raylib has been built." > $(TMPDIR)/raylib.txt
+
+$(RAYDIR):
+	@echo "It appears that $(RAYDIR) is missing!!!"
+	@echo "Have you cloned this project recursively?"
+	@echo "Attempting to pull submodule automatically..."
+	git pull --recurse-submodules
 
 .PRECIOUS: $(TMPDIR)/%.mk
 $(TMPDIR)/%.mk: $(SRCDIR)/%.c
