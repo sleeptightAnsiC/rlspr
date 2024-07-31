@@ -48,11 +48,16 @@ clean:
 .PHONY: always
 always: ;
 
-$(EXE): $(TMPDIR)/Makefile.mk ./lib/raylib/src/libraylib.a always
-	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS) $(shell ls ./lib/raylib/src/*.o) -lm" EXE='$(EXE)' --file='$<'
+$(EXE): $(TMPDIR)/Makefile.mk raylib always
+	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS)" EXE='$(EXE)' --file='$<'
 
-./lib/raylib/src/libraylib.a: always
-	$(MAKE) CFLAGS='-O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C './lib/raylib/src'
+# TODO: we should move all raylib's build artifacts into TMPDIR
+# and clean raylib directories afterwards, so it will integrate better
+# while using multiple C compilers
+# WARN: also seems like raylib's .gitignore isn't ignoring some reproducable files...
+.PHONY: raylib
+raylib: always
+	$(MAKE) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C './lib/raylib/src'
 
 .PRECIOUS: $(TMPDIR)/%.mk
 $(TMPDIR)/%.mk: $(SRCDIR)/%.c
@@ -60,9 +65,10 @@ $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -MM $^ >> $@ || (rm $@ && exit 1)
 	echo "	\$$(CC) \$$(CFLAGS) -c \$$< -o \$$@" >> $@
 
+# WARN: raylib's objs are hardcoded here
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
 	echo "\$$(EXE): $(OBJS)" > $@
-	echo "	\$$(CC) \$$(CFLAGS) \$$^ -o \$$@" >> $@
+	echo "	\$$(CC) \$$(CFLAGS) ./lib/raylib/src/*.o -lm \$$^ -o \$$@" >> $@
 	for file in $^; do \
 		echo "" >> $@; \
 		cat $$file >> $@; \
