@@ -35,7 +35,7 @@ run: build
 
 # WARN: hardcoded requirement for creating directories
 .PHONY: build
-build:  $(TMPDIR) $(BINDIR) compile_commands.json $(EXE)
+build: $(RAYDIR) $(TMPDIR) $(BINDIR) compile_commands.json $(EXE)
 
 .PHONY: clean
 clean:
@@ -50,7 +50,7 @@ always: ;
 $(EXE): $(TMPDIR)/Makefile.mk $(TMPDIR)/raylib.txt always
 	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS)" EXE='$(EXE)' --file='$<'
 
-$(TMPDIR)/raylib.txt: $(RAYDIR) $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
+$(TMPDIR)/raylib.txt: $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
 	$(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C $(RAYDIR)
 	\
 	for ro in $$(ls $(RAYDIR)/*.o); do \
@@ -65,7 +65,7 @@ $(RAYDIR):
 	@echo "It appears that $(RAYDIR) is missing!!!"
 	@echo "Have you cloned this project recursively?"
 	@echo "Attempting to pull submodule automatically..."
-	git pull --recurse-submodules
+	git submodule update --init
 
 .PRECIOUS: $(TMPDIR)/%.mk
 $(TMPDIR)/%.mk: $(SRCDIR)/%.c
