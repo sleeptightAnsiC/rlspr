@@ -6,15 +6,22 @@
 #include "./util.h"
 #include "raylib.h"
 
-struct CellState {
+enum CellState {
+	CELL_STATE_UNTOUCHED = 0,
+	CELL_STATE_REVEALED,
+	CELL_STATE_FLAGGED,
+	CELL_STATE_QUESTIONED,
+};
+
+struct CellData {
 	uint8_t nearby : 4;
-	bool planted : 1;
-	bool flagged : 1;
-	bool revealed : 1;
-	bool questioned : 1;
+	// WARN: this one should be 'enum CellState'
+	uint8_t state: 2;
+	bool planted: 1;
+	bool _pad: 1;
 };
 // kurde balans, git majonez
-UTIL_STATIC_ASSERT(sizeof(struct CellState) == 1);
+UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
 
 // FIXME:
 // Everything uses ambigious 'int'
@@ -22,7 +29,7 @@ UTIL_STATIC_ASSERT(sizeof(struct CellState) == 1);
 // but 'uint32_t' should be used instead!
 
 struct CellArr {
-	struct CellState *_data;
+	struct CellData *_data;
 	int w;
 	int h;
 };
@@ -31,7 +38,7 @@ UTIL_STATIC_ASSERT(sizeof(struct CellArr) == 16);
 static struct CellArr
 cell_new(int w, int h)
 {
-	struct CellState *data = calloc((size_t)(w * h), sizeof(struct CellState));
+	struct CellData *data = calloc((size_t)(w * h), sizeof(struct CellData));
 	struct CellArr arr = {
 		._data = data,
 		.w = w,
@@ -57,7 +64,7 @@ cell_xy_to_idx(struct CellArr *arr, int x, int y)
 	return (y * arr->w) + x;
 }
 
-static struct CellState *
+static struct CellData *
 cell_get(struct CellArr *arr, int x, int y)
 {
 	int idx = cell_xy_to_idx(arr, x, y);
@@ -65,7 +72,7 @@ cell_get(struct CellArr *arr, int x, int y)
 }
 
 static void
-cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellState *))
+cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellData *))
 {
 	const bool xg0 = x > 0;
 	const bool xlw = x < arr->w - 1;
@@ -98,17 +105,17 @@ cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellSta
 }
 
 static void
-_nearby_increment(struct CellState *cs)
+_nearby_increment(struct CellData *cd)
 {
-	assert(cs != NULL);
-	++(cs->nearby);
+	assert(cd != NULL);
+	++(cd->nearby);
 }
 
 static void
 cell_plant(struct CellArr *arr, int x, int y)
 {
-	struct CellState *cs = cell_get(arr, x, y);
-	cs->planted = true;
+	struct CellData *cd = cell_get(arr, x, y);
+	cd->planted = true;
 	cell_foreach_around(arr, x, y, _nearby_increment);
 }
 
@@ -139,6 +146,20 @@ main(void)
 	cell_plant(&cells, 0, 5);
 	cell_plant(&cells, 0, 0);
 
+	// reveal 2x2 cells in top-left corner
+	cell_get(&cells, 0, 0)->state = CELL_STATE_REVEALED;
+	cell_get(&cells, 1, 0)->state = CELL_STATE_REVEALED;
+	cell_get(&cells, 0, 1)->state = CELL_STATE_REVEALED;
+	cell_get(&cells, 1, 1)->state = CELL_STATE_REVEALED;
+
+	// reveal 2 empty cells
+	cell_get(&cells, 2, 2)->state = CELL_STATE_REVEALED;
+	cell_get(&cells, 2, 3)->state = CELL_STATE_REVEALED;
+
+	// flag and question 2 cells on the middle
+	cell_get(&cells, 5, 5)->state = CELL_STATE_FLAGGED;
+	cell_get(&cells, 4, 4)->state = CELL_STATE_QUESTIONED;
+
 	int border = 1;
 	int scale = 50;
 	int win_w = (NUM + (border * 2)) * scale;
@@ -153,8 +174,54 @@ main(void)
 		ClearBackground(GRAY);
 
 		{
+			// TODO: zooming should follow the cursor position
+			// TODO: add ability to scroll/pad the area (by cholding scroll-wheel / mouse3)
 			float mouseWheelMove = GetMouseWheelMove();
 			scale += (int)mouseWheelMove;
+		}
+
+		// draw cell contents
+		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
+			const int char_pos_x = scale * (x + border) + (int)(0.3f * (float)(scale));
+			const int char_pos_y = scale * (y + border) + (int)(0.1f * (float)(scale));
+			const struct CellData *cd = cell_get(&cells, x, y);
+			switch (cd->state)
+			{
+			case CELL_STATE_REVEALED: {
+				const int rect_x = (border + x) * scale;
+				const int rect_y = (border + y) * scale;
+				DrawRectangle(rect_x, rect_y, scale, scale, DARKGRAY);
+				if (cd->planted) {
+					const int scale_half = (int)((float)(scale) * 0.5f);
+					const int center_x = scale * (x + border) + scale_half;
+					const int center_y = scale * (y + border) + scale_half;
+					const float radius = (float)(scale_half) * 0.8f;
+					DrawCircle(center_x, center_y, radius, DARKPURPLE);
+				}
+				else switch (cd->nearby)
+				{
+				case 0:
+					break;
+#				define X(NUM, COLOR) case NUM: DrawText(#NUM, char_pos_x, char_pos_y, scale, COLOR); break;
+				X_NUMBERS_COLORS_MAP
+#				undef X
+				default:
+					UTIL_UNREACHABLE();
+				}
+				break;
+			}
+			case CELL_STATE_QUESTIONED:
+				DrawText("?", char_pos_x, char_pos_y, scale, ORANGE);
+				break;
+			case CELL_STATE_FLAGGED:
+				// TODO: draw actual flag glyph
+				DrawText("F", char_pos_x, char_pos_y, scale, ORANGE);
+				break;
+			case CELL_STATE_UNTOUCHED:
+				break;
+			default:
+				UTIL_UNREACHABLE();
+			}
 		}
 
 		// draw cell borders
@@ -164,34 +231,6 @@ main(void)
 			const int endPos = NUM * scale + startPos;
 			DrawLine(startPos, stride, endPos, stride, DARKGRAY);
 			DrawLine(stride, startPos, stride, endPos, DARKGRAY);
-		}
-
-		// draw cell contents
-		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
-			const struct CellState *curr = cell_get(&cells, x, y);
-			if (curr->planted) {
-				const int scale_half = (int)((float)(scale) * 0.5f);
-				const int center_x = scale * (x + border) + scale_half;
-				const int center_y = scale * (y + border) + scale_half;
-				const float radius = (float)(scale_half) * 0.8f;
-				DrawCircleLines(center_x, center_y, radius, DARKPURPLE);
-			}
-			else switch (curr->nearby)
-			{
-#			define X(NUM, COLOR)                                                           \
-			case NUM: {                                                                    \
-			        const int pos_x = scale * (x + border) + (int)(0.3f * (float)(scale)); \
-			        const int pos_y = scale * (y + border) + (int)(0.1f * (float)(scale)); \
-			        DrawText(#NUM, pos_x, pos_y, scale, COLOR);                            \
-			        break;                                                                 \
-			        }                                                                      
-			X_NUMBERS_COLORS_MAP
-#			undef X
-			case 0:
-				break;
-			default:
-				UTIL_UNREACHABLE();
-			}
 		}
 
 		const int mouse_x = GetMouseX();
