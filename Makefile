@@ -11,7 +11,7 @@ TMPDIR = ./tmp/$(CC)
 BINDIR = ./bin/$(CC)
 SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
-EXE = $(BINDIR)/mtpl
+EXE = $(BINDIR)/rlspr
 
 CFLAGS = @./$(RCPDIR)/flags_cc.txt
 # CFLAGS = @./$(RCPDIR)/flags_gcc.txt
@@ -73,10 +73,10 @@ $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
 	echo "\$$(EXE): $(OBJS)" > $@
 	echo "	\$$(CC) \$$(CFLAGS) \$$^ -o \$$@" >> $@
-	for file in $^; do        \
-		echo "" >> $@;    \
+	for file in $^; do \
+		echo "" >> $@; \
 		cat $$file >> $@; \
-	done                      \
+	done \
 	;
 
 $(TMPDIR) $(BINDIR): $@
@@ -84,13 +84,13 @@ $(TMPDIR) $(BINDIR): $@
 
 compile_commands.json: $(SRCS)
 	echo "[" > $@
-	for file in $^; do                                                                                             \
-		echo "	{" >> $@;                                                                                      \
-		echo "		\"file\": \"$$file\"," >> $@;                                                          \
-		echo "		\"command\": \"clang $$file @$(RCPDIR)/flags_clang.txt -c\"," >> $@;                   \
+	for file in $^; do \
+		echo "	{" >> $@; \
+		echo "		\"file\": \"$$file\"," >> $@; \
+		echo "		\"command\": \"clang $$file @$(RCPDIR)/flags_clang.txt -c\"," >> $@; \
 		echo "		\"directory\": \"$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))\"," >> $@; \
-		echo "	}," >> $@;                                                                                     \
-	done                                                                                                           \
+		echo "	}," >> $@; \
+	done \
 	;
 	echo "]" >> $@
 

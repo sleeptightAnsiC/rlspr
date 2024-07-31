@@ -1,5 +1,4 @@
 -std=c99
--lraylib
 -O0
--ggdb3
--pipe
+-g
+-lraylib
