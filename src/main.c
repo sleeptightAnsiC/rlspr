@@ -188,8 +188,17 @@ main(void)
 			const int char_pos_x = scale * (x + border) + (int)(0.3f * (float)(scale));
 			const int char_pos_y = scale * (y + border) + (int)(0.1f * (float)(scale));
 			const struct CellData *cd = cell_get(&cells, x, y);
-			switch (cd->state)
-			{
+			if (
+				true
+				&& cd == hovered_cell
+				&& cd->state == CELL_STATE_UNTOUCHED
+				&& IsMouseButtonDown(MOUSE_BUTTON_LEFT)
+			) {
+				// FIXME: code repetition
+				const int rect_x = (border + x) * scale;
+				const int rect_y = (border + y) * scale;
+				DrawRectangle(rect_x, rect_y, scale, scale, DARKGRAY);
+			} else switch (cd->state) {
 			case CELL_STATE_REVEALED: {
 				const int rect_x = (border + x) * scale;
 				const int rect_y = (border + y) * scale;
@@ -200,9 +209,7 @@ main(void)
 					const int center_y = scale * (y + border) + scale_half;
 					const float radius = (float)(scale_half) * 0.8f;
 					DrawCircle(center_x, center_y, radius, DARKPURPLE);
-				}
-				else switch (cd->nearby)
-				{
+				} else switch (cd->nearby) {
 				case 0:
 					break;
 #				define X(NEARBY, COLOR)                                          \
@@ -228,7 +235,7 @@ main(void)
 				break;
 			default:
 				UTIL_UNREACHABLE();
-			} //end switch (cd->state)
+			} //end else switch (cd->state)
 		}
 
 		// draw cell borders
