@@ -72,18 +72,29 @@ cell_get(struct CellArr *arr, int x, int y)
 	return &(arr->_data[idx]);
 }
 
-// static void
-// cell_foreach_incross(struct CellArr *arr, int x, int y, void(func)(struct CellData *))
-// {
-// 	if (x > 0)
-// 		func(cell_get(arr, x-1, y));
-// 	if (x < arr->w - 1)
-// 		func(cell_get(arr, x+1, y));
-// 	if (y > 0)
-// 		func(cell_get(arr, x, y-1));
-// 	if (y < arr->h - 1)
-// 		func(cell_get(arr, x, y+1));
-// }
+// TODO: this returns true in case of revealing the bomb
+//    but I'm not sure if placing said logic here is a good idea
+static bool
+cell_reveal(struct CellArr *arr, int x, int y)
+{
+	struct CellData *ca = cell_get(arr, x, y);
+	if (ca->state == CELL_STATE_UNTOUCHED) {
+		ca->state = CELL_STATE_REVEALED;
+		if (ca->planted)
+			return true;
+		if (ca->nearby == 0) {
+			if (x > 0)
+				cell_reveal(arr, x-1, y);
+			if (x < arr->w - 1)
+				cell_reveal(arr, x+1, y);
+			if (y > 0)
+				cell_reveal(arr, x, y-1);
+			if (y < arr->h - 1)
+				cell_reveal(arr, x, y+1);
+		}
+	}
+	return false;
+}
 
 static void
 cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellData *))
@@ -121,6 +132,7 @@ static void
 cell_plant(struct CellArr *arr, int x, int y)
 {
 	struct CellData *cd = cell_get(arr, x, y);
+	UTIL_ASSERT(!cd->planted);
 	cd->planted = true;
 	cell_foreach_around(arr, x, y, cell_nearby_increment);
 }
@@ -140,22 +152,22 @@ cell_plant(struct CellArr *arr, int x, int y)
 int
 main(void)
 {
-	struct CellArr cells = cell_new(NUM, NUM);
+	struct CellArr arr = cell_new(NUM, NUM);
 
 	// FIXME: this should be semi-random
-	cell_plant(&cells, 2, 5);
-	cell_plant(&cells, 2, 6);
-	cell_plant(&cells, 3, 5);
-	cell_plant(&cells, 2, 9);
-	cell_plant(&cells, 9, 5);
-	cell_plant(&cells, 9, 5);
-	cell_plant(&cells, 0, 5);
-	cell_plant(&cells, 0, 0);
+	cell_plant(&arr, 2, 5);
+	cell_plant(&arr, 2, 6);
+	cell_plant(&arr, 3, 5);
+	cell_plant(&arr, 2, 9);
+	cell_plant(&arr, 9, 5);
+	cell_plant(&arr, 0, 5);
+	cell_plant(&arr, 0, 0);
 
 	int border = 1;
 	int scale = 50;
 	int win_w = (NUM + (border * 2)) * scale;
 	int win_h = win_w;
+	bool bombed = false;
 
 	SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
 	InitWindow(win_w, win_h, "rlspr");
@@ -179,15 +191,15 @@ main(void)
 		if (mouse_y < (border + NUM) * scale && mouse_y >= border * scale)
 			hovered_y = (mouse_y - border * scale) / scale;
 		if (hovered_x != -1 && hovered_y != -1) {
-			hovered_cell = cell_get(&cells, hovered_x, hovered_y);
+			hovered_cell = cell_get(&arr, hovered_x, hovered_y);
 			hovered_cell->hovered = true;
 		}
 
 		// draw cell contents
-		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
+		for (int x = 0; x < arr.w; ++x) for (int y = 0; y < arr.h; ++y) {
 			const int char_pos_x = scale * (x + border) + (int)(0.3f * (float)(scale));
 			const int char_pos_y = scale * (y + border) + (int)(0.1f * (float)(scale));
-			const struct CellData *cd = cell_get(&cells, x, y);
+			const struct CellData *cd = cell_get(&arr, x, y);
 			if (
 				true
 				&& cd == hovered_cell
@@ -272,9 +284,10 @@ main(void)
 			&& hovered_cell->state == CELL_STATE_UNTOUCHED
 			&& IsMouseButtonReleased(MOUSE_BUTTON_LEFT)
 		) {
-			// FIXME: proper game logic here
-			hovered_cell->state = CELL_STATE_REVEALED;
+			// FIXME: add logic related to winning, loosing and restarting the game
+			bombed = cell_reveal(&arr, hovered_x, hovered_y);
 		}
+		(void)bombed;
 
 		// react to RMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
@@ -313,6 +326,6 @@ main(void)
 	}
 	CloseWindow();
 
-	cell_destroy(&cells);
+	cell_destroy(&arr);
 	return EXIT_SUCCESS;
 }
