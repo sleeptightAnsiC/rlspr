@@ -18,7 +18,7 @@ struct CellData {
 	// WARN: this one should be 'enum CellState'
 	uint8_t state: 2;
 	bool planted: 1;
-	bool _pad: 1;
+	bool hovered: 1;
 };
 // kurde balans, git majonez
 UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
@@ -152,20 +152,6 @@ main(void)
 	cell_plant(&cells, 0, 5);
 	cell_plant(&cells, 0, 0);
 
-	// reveal 2x2 cells in top-left corner
-	cell_get(&cells, 0, 0)->state = CELL_STATE_REVEALED;
-	cell_get(&cells, 1, 0)->state = CELL_STATE_REVEALED;
-	cell_get(&cells, 0, 1)->state = CELL_STATE_REVEALED;
-	cell_get(&cells, 1, 1)->state = CELL_STATE_REVEALED;
-
-	// reveal 2 empty cells
-	cell_get(&cells, 2, 2)->state = CELL_STATE_REVEALED;
-	cell_get(&cells, 2, 3)->state = CELL_STATE_REVEALED;
-
-	// flag and question 2 cells on the middle
-	cell_get(&cells, 5, 5)->state = CELL_STATE_FLAGGED;
-	cell_get(&cells, 4, 4)->state = CELL_STATE_QUESTIONED;
-
 	int border = 1;
 	int scale = 50;
 	int win_w = (NUM + (border * 2)) * scale;
@@ -176,27 +162,26 @@ main(void)
 	UTIL_ASSERT(IsWindowReady());
 	while (!WindowShouldClose())
 	{
+		// frame init
 		BeginDrawing();
 		ClearBackground(GRAY);
 
-		// zoom-in/out based on mouse-scroll movement
-		{
-			// TODO: zooming should follow the cursor position
-			// TODO: add ability to scroll/pad the area (by cholding scroll-wheel / mouse3)
-			float mouseWheelMove = GetMouseWheelMove();
-			scale += (int)mouseWheelMove;
-		}
 
-		const int mouse_x = GetMouseX();
-		const int mouse_y = GetMouseY();
 		int hovered_x = -1;
 		int hovered_y = -1;
+		struct CellData *hovered_cell = NULL;
 
-		// check if any cell is being hovered, set hovered_x/y
+		// set hovered_x/y, check if any cell is being hovered
+		const int mouse_x = GetMouseX();
+		const int mouse_y = GetMouseY();
 		if (mouse_x < (border + NUM) * scale && mouse_x >= border * scale)
 			hovered_x = (mouse_x - border * scale) / scale;
 		if (mouse_y < (border + NUM) * scale && mouse_y >= border * scale)
 			hovered_y = (mouse_y - border * scale) / scale;
+		if (hovered_x != -1 && hovered_y != -1) {
+			hovered_cell = cell_get(&cells, hovered_x, hovered_y);
+			hovered_cell->hovered = true;
+		}
 
 		// draw cell contents
 		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
@@ -229,7 +214,7 @@ main(void)
 #				undef X
 				default:
 					UTIL_UNREACHABLE();
-				}
+				} //end else switch (cd->nearby)
 				break;
 			}
 			case CELL_STATE_QUESTIONED:
@@ -243,10 +228,11 @@ main(void)
 				break;
 			default:
 				UTIL_UNREACHABLE();
-			}
+			} //end switch (cd->state)
 		}
 
 		// draw cell borders
+		// NOTE: this must done be after draw pass to have proper Z-order
 		for (int i = 0; i <= NUM + 1; ++i) {
 			const int stride = scale * i;
 			const int startPos = border * scale;
@@ -255,19 +241,66 @@ main(void)
 			DrawLine(stride, startPos, stride, endPos, DARKGRAY);
 		}
 
-		// highlight border of currently hovered cell and change cursor accordingly
-		if (hovered_x != -1 && hovered_y != -1) {
+		// highlight border around currently hovered cell
+		// NOTE: this must done be after draw pass to have proper Z-order
+		if (hovered_cell != NULL) {
 			const int pos_x = (hovered_x + border) * scale;
 			const int pos_y = (hovered_y + border) * scale;
 			DrawRectangleLines(pos_x, pos_y, scale, scale, BLACK);
-			const struct CellData *current = cell_get(&cells, hovered_x, hovered_y);
-			const bool not_revealed = current->state  != CELL_STATE_REVEALED;
+		}
+
+		// adjust cursor visuals
+		if (hovered_cell != NULL) {
+			const bool not_revealed = hovered_cell->state  != CELL_STATE_REVEALED;
 			const int cursor = not_revealed ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT;
 			SetMouseCursor(cursor);
 		} else {
 			SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 		}
 
+		// react to LMB click
+		if (
+			true
+			&& hovered_cell != NULL
+			&& hovered_cell->state == CELL_STATE_UNTOUCHED
+			&& IsMouseButtonReleased(MOUSE_BUTTON_LEFT)
+		) {
+			// FIXME: proper game logic here
+			hovered_cell->state = CELL_STATE_REVEALED;
+		}
+
+		// react to RMB click
+		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
+			const enum CellState hcs = hovered_cell->state;
+			switch (hcs)
+			{
+			case CELL_STATE_REVEALED:
+				break;
+			case CELL_STATE_UNTOUCHED:
+				hovered_cell->state = CELL_STATE_FLAGGED;
+				break;
+			case CELL_STATE_FLAGGED:
+				hovered_cell->state = CELL_STATE_QUESTIONED;
+				break;
+			case CELL_STATE_QUESTIONED:
+				hovered_cell->state = CELL_STATE_UNTOUCHED;
+				break;
+			default:
+				UTIL_UNREACHABLE();
+			}
+		}
+
+		// zoom-in/out based on mouse-scroll movement (visible in next frame)
+		{
+			// TODO: zooming should follow the cursor position
+			// TODO: add ability to scroll/pad the area (by cholding scroll-wheel / mouse3)
+			float mouseWheelMove = GetMouseWheelMove();
+			scale += (int)mouseWheelMove;
+		}
+
+		// clean up at the end of the frame
+		if (hovered_cell != NULL)
+			hovered_cell->hovered = false;
 		DrawFPS(0, 0);
 		EndDrawing();
 	}
