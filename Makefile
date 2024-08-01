@@ -39,6 +39,8 @@ build: $(RAYDIR) $(TMPDIR) $(BINDIR) compile_commands.json $(EXE)
 .PHONY: clean
 clean:
 	rm -fr $(shell cat .gitignore)
+	$(MAKE) clean -C $(RAYDIR)
+	cd $(RAYDIR) && git restore .
 
 
 ### generic sub-targets (called by main targets):
@@ -49,9 +51,12 @@ always: ;
 $(EXE): $(TMPDIR)/Makefile.mk $(TMPDIR)/raylib.txt always
 	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS)" EXE='$(EXE)' --file='$<'
 
+# FIXME: code repetition while cleaning Raylib
 .PRECIOUS: $(TMPDIR)/raylib%
 $(TMPDIR)/raylib.txt: $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
-	env -u CFLAGS $(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C $(RAYDIR)
+	$(MAKE) clean -C $(RAYDIR)
+	cd $(RAYDIR) && git restore .
+	env -uCFLAGS $(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C $(RAYDIR)
 	\
 	for ro in $$(ls $(RAYDIR)/*.o); do \
 		cp -f $$ro $(TMPDIR)/raylib_$$(basename $$ro); \
