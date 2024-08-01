@@ -1,13 +1,14 @@
 # TODO
 - those files has been taken from mtpl project, clean them up later
-- change file name 'lib' to 'dep'
+- change dir name 'lib' to 'dep', or remove it entirerly in case there are no more dependencies than Raylib
 - fix issues with building Raylib while using: make CFLAGS=''
 - (in far future) replace current draw pass with GLSL shader
+- see for reference: https://minesweeper-pro.com/introduction/
 
 
 # rlspr
 Simple (but faithful) clone of classic WindowsNT's Minesweeper game.\
-Created with Raylib, written in C99 - builds and runs everywhere on everything!
+Created with Raylib, written in C99 - builds and runs everywhere, on everything!
 
 
 # context (why rlspr has been made)
@@ -16,7 +17,5 @@ while I was scattering through WINE's directories on Linux,
 I've spotted a similar clone there - `C:\windows\system32\winemine.exe` -
 this trully inspired me to give it a try.
 
-In polish versions of Windows this game is called "Saper",
+In polish Windows translations this game is called "Saper" (with one "p"),
 that's why the project's name is `rlspr` as it stands for "Raylib's Saper".
-https://en.wikipedia.org/wiki/Microsoft_Minesweeper \
-https://en.wikipedia.org/wiki/Raylib
