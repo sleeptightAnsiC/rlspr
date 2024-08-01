@@ -1,4 +1,6 @@
 
+### variables:
+
 # CC = cc
 # CC = c99
 CC = gcc
@@ -25,9 +27,6 @@ SANDBOX = $(shell cat $(RCPDIR)/sandbox_gdb.txt)
 
 
 ### main targets:
-
-.PHONY: default
-default: run
 
 .PHONY: run
 run: build
@@ -65,9 +64,13 @@ $(TMPDIR)/raylib.txt: $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
 $(RAYDIR):
 	@echo "It appears that $(RAYDIR) is missing!!!"
 	@echo "Have you cloned this project recursively?"
-	@echo "Attempting to pull submodule automatically..."
+	@echo "Attempting to recover by updating Raylib's submodule..."
 	git submodule update --init
 
+# TODO: '|| (rm $@ && exit 1)' is a bit ugly but we have to use it
+#       because tcc does not support gcc's '-MT'
+#       Maybe it would be nice to contribute '-MT' to tcc someday!
+# FIXME: I think I missunderstood '-MT' with '-MF', and tcc supports it already
 .PRECIOUS: $(TMPDIR)/%.mk
 $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 	printf "$(TMPDIR)/" > $@
