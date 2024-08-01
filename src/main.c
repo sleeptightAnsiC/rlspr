@@ -15,7 +15,7 @@ enum CellState {
 
 struct CellData {
 	uint8_t nearby : 4;
-	// WARN: this one should be 'enum CellState'
+	// WARN: this one should be 'enum CellState' but it would break the padding
 	uint8_t state: 2;
 	bool planted: 1;
 	bool hovered: 1;
@@ -24,9 +24,10 @@ struct CellData {
 UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
 
 // FIXME:
-// Everything uses ambigious 'int'
+// Everything uses ambigious signed 'int'
 // because Raylib uses it everywhere
-// but 'uint32_t' should be used instead!
+// but all those ints should be 'uint32_t' instead!
+// For now it's just easier to keep as it is...
 
 struct CellArr {
 	struct CellData *_data;
@@ -177,7 +178,6 @@ main(void)
 		// frame init
 		BeginDrawing();
 		ClearBackground(GRAY);
-
 
 		int hovered_x = -1;
 		int hovered_y = -1;
