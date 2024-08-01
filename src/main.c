@@ -51,16 +51,17 @@ static void
 cell_destroy(struct CellArr *arr)
 {
 	free(arr->_data);
+	arr->_data = NULL;
 }
 
 static int
-cell_xy_to_idx(struct CellArr *arr, int x, int y)
+cell_xy_to_idx(const struct CellArr *arr, int x, int y)
 {
-	assert(arr != NULL);
-	assert(x >= 0);
-	assert(y >= 0);
-	assert(x < arr->w);
-	assert(x < arr->h);
+	UTIL_ASSERT(arr != NULL);
+	UTIL_ASSERT(x >= 0);
+	UTIL_ASSERT(y >= 0);
+	UTIL_ASSERT(x < arr->w);
+	UTIL_ASSERT(x < arr->h);
 	return (y * arr->w) + x;
 }
 
@@ -71,6 +72,19 @@ cell_get(struct CellArr *arr, int x, int y)
 	return &(arr->_data[idx]);
 }
 
+// static void
+// cell_foreach_incross(struct CellArr *arr, int x, int y, void(func)(struct CellData *))
+// {
+// 	if (x > 0)
+// 		func(cell_get(arr, x-1, y));
+// 	if (x < arr->w - 1)
+// 		func(cell_get(arr, x+1, y));
+// 	if (y > 0)
+// 		func(cell_get(arr, x, y-1));
+// 	if (y < arr->h - 1)
+// 		func(cell_get(arr, x, y+1));
+// }
+
 static void
 cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellData *))
 {
@@ -78,26 +92,18 @@ cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellDat
 	const bool xlw = x < arr->w - 1;
 	const bool yg0 = y > 0;
 	const bool ylh = y < arr->h - 1;
-	// -1 -1
-	// -1 0
-	// -1 1
 	if (xg0 && yg0)
 		func(cell_get(arr, x-1, y-1));
 	if (xg0)
 		func(cell_get(arr, x-1, y));
 	if (xg0 && ylh)
 		func(cell_get(arr, x-1, y+1));
-	// 1 -1
-	// 1 0
-	// 1 1
 	if (xlw && yg0)
 		func(cell_get(arr, x+1, y-1));
 	if (xlw)
 		func(cell_get(arr, x+1, y));
 	if (xlw && ylh)
 		func(cell_get(arr, x+1, y+1));
-	// 0 -1
-	// 0 1
 	if (yg0)
 		func(cell_get(arr, x, y-1));
 	if (ylh)
@@ -105,9 +111,9 @@ cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellDat
 }
 
 static void
-_nearby_increment(struct CellData *cd)
+cell_nearby_increment(struct CellData *cd)
 {
-	assert(cd != NULL);
+	UTIL_ASSERT(cd != NULL);
 	++(cd->nearby);
 }
 
@@ -116,7 +122,7 @@ cell_plant(struct CellArr *arr, int x, int y)
 {
 	struct CellData *cd = cell_get(arr, x, y);
 	cd->planted = true;
-	cell_foreach_around(arr, x, y, _nearby_increment);
+	cell_foreach_around(arr, x, y, cell_nearby_increment);
 }
 
 #define NUM 10
@@ -167,18 +173,30 @@ main(void)
 
 	SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
 	InitWindow(win_w, win_h, "rlspr");
-	assert(IsWindowReady());
+	UTIL_ASSERT(IsWindowReady());
 	while (!WindowShouldClose())
 	{
 		BeginDrawing();
 		ClearBackground(GRAY);
 
+		// zoom-in/out based on mouse-scroll movement
 		{
 			// TODO: zooming should follow the cursor position
 			// TODO: add ability to scroll/pad the area (by cholding scroll-wheel / mouse3)
 			float mouseWheelMove = GetMouseWheelMove();
 			scale += (int)mouseWheelMove;
 		}
+
+		const int mouse_x = GetMouseX();
+		const int mouse_y = GetMouseY();
+		int hovered_x = -1;
+		int hovered_y = -1;
+
+		// check if any cell is being hovered, set hovered_x/y
+		if (mouse_x < (border + NUM) * scale && mouse_x >= border * scale)
+			hovered_x = (mouse_x - border * scale) / scale;
+		if (mouse_y < (border + NUM) * scale && mouse_y >= border * scale)
+			hovered_y = (mouse_y - border * scale) / scale;
 
 		// draw cell contents
 		for (int x = 0; x < cells.w; ++x) for (int y = 0; y < cells.h; ++y) {
@@ -202,7 +220,11 @@ main(void)
 				{
 				case 0:
 					break;
-#				define X(NUM, COLOR) case NUM: DrawText(#NUM, char_pos_x, char_pos_y, scale, COLOR); break;
+#				define X(NEARBY, COLOR)                                          \
+				case NEARBY:                                                     \
+				        DrawText(#NEARBY, char_pos_x, char_pos_y, scale, COLOR); \
+				        break                                                    \
+				        ;                                                        
 				X_NUMBERS_COLORS_MAP
 #				undef X
 				default:
@@ -233,21 +255,15 @@ main(void)
 			DrawLine(stride, startPos, stride, endPos, DARKGRAY);
 		}
 
-		const int mouse_x = GetMouseX();
-		const int mouse_y = GetMouseY();
-
-		// highlight currently hovered cell
-		if (
-			true
-			&& mouse_x <= (border + NUM) * scale
-			&& mouse_x >= border * scale
-			&& mouse_y <= (border + NUM) * scale
-			&& mouse_y >= border * scale
-		) {
-			const int pos_x = (mouse_x / scale) * scale;
-			const int pos_y = (mouse_y / scale) * scale;
+		// highlight border of currently hovered cell and change cursor accordingly
+		if (hovered_x != -1 && hovered_y != -1) {
+			const int pos_x = (hovered_x + border) * scale;
+			const int pos_y = (hovered_y + border) * scale;
 			DrawRectangleLines(pos_x, pos_y, scale, scale, BLACK);
-			SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+			const struct CellData *current = cell_get(&cells, hovered_x, hovered_y);
+			const bool not_revealed = current->state  != CELL_STATE_REVEALED;
+			const int cursor = not_revealed ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT;
+			SetMouseCursor(cursor);
 		} else {
 			SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 		}

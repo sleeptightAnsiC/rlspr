@@ -1,6 +1,7 @@
 # TODO
 - those files has been taken from mtpl project, clean them up later
 - raylib has been provided via pacman, I need to build and link it manually
+- change 'lib' to 'dep'
 
 
 # rlspr
