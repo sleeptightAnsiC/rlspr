@@ -130,7 +130,19 @@ main(void)
 		arr.h = height;
 	}
 
+	int border = 1;
+	int scale = 50;
+	int win_w = (width + (border * 2)) * scale;
+	int win_h = win_w;
+	bool bombed = false;
+
+	SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
+	InitWindow(win_w, win_h, "rlspr");
+	UTIL_ASSERT(IsWindowReady());
+
 	// plant bombs into random cells
+	// WARN: This must be after after InitWindow (see link below) !!!
+	// https://www.reddit.com/r/raylib/comments/r58340/comment/hmnkc48/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 	for (int i = 0; i < bombs;) {
 		const int x = GetRandomValue(0, width - 1);
 		const int y = GetRandomValue(0, height - 1);
@@ -142,15 +154,6 @@ main(void)
 		++i;
 	}
 
-	int border = 1;
-	int scale = 50;
-	int win_w = (width + (border * 2)) * scale;
-	int win_h = win_w;
-	bool bombed = false;
-
-	SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
-	InitWindow(win_w, win_h, "rlspr");
-	UTIL_ASSERT(IsWindowReady());
 	while (!WindowShouldClose())
 	{
 		// frame init
