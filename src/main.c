@@ -30,7 +30,7 @@ UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
 // For now it's just easier to keep as it is...
 
 struct CellArr {
-	struct CellData *_data;
+	struct CellData *data;
 	int w;
 	int h;
 };
@@ -45,28 +45,29 @@ cell_get(struct CellArr *arr, int x, int y)
 	UTIL_ASSERT(x < arr->w);
 	UTIL_ASSERT(x < arr->h);
 	int idx = (y * arr->w) + x;
-	return &(arr->_data[idx]);
+	return &(arr->data[idx]);
 }
 
 // TODO: this returns true in case of revealing the bomb
 //    but I'm not sure if placing said logic here is a good idea
 static bool
-cell_reveal(struct CellArr *arr, int x, int y)
+cell_reveal_recur(struct CellArr *arr, int x, int y)
 {
 	struct CellData *ca = cell_get(arr, x, y);
 	if (ca->state == CELL_STATE_UNTOUCHED) {
+		// FIXME: do I actually want to reveal cell when it's planted with bomb??
 		ca->state = CELL_STATE_REVEALED;
 		if (ca->planted)
 			return true;
 		if (ca->nearby == 0) {
 			if (x > 0)
-				cell_reveal(arr, x-1, y);
+				cell_reveal_recur(arr, x-1, y);
 			if (x < arr->w - 1)
-				cell_reveal(arr, x+1, y);
+				cell_reveal_recur(arr, x+1, y);
 			if (y > 0)
-				cell_reveal(arr, x, y-1);
+				cell_reveal_recur(arr, x, y-1);
 			if (y < arr->h - 1)
-				cell_reveal(arr, x, y+1);
+				cell_reveal_recur(arr, x, y+1);
 		}
 	}
 	return false;
@@ -97,6 +98,7 @@ cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellDat
 		func(cell_get(arr, x, y+1));
 }
 
+// NOTE: this is passed as a function pointer in only once place
 static void
 cell_nearby_increment(struct CellData *cd)
 {
@@ -114,66 +116,81 @@ cell_nearby_increment(struct CellData *cd)
         X(7, PURPLE)         \
         X(8, DARKPURPLE)     \
 
+// game settings
+// TODO: these should be possible to change at runtime someday
+//       (that's why names are lower-cased, despite
+//       that values are clearly known at compile-time)
 static const int width = 9;
 static const int height = 9;
 static const int bombs = 10;
+static const int border = 1;
 
 int
 main(void)
 {
-	struct CellArr arr;
-
-	{  // initialize cells array
-		struct CellData *data = calloc((size_t)(width * height), sizeof(struct CellData));
-		arr._data = data;
-		arr.w = width;
-		arr.h = height;
-	}
-
-	int border = 1;
+	// game state persistent between loop cycles
+	struct CellArr arr = { .data = NULL };
 	int scale = 50;
-	int win_w = (width + (border * 2)) * scale;
-	int win_h = win_w;
-	bool bombed = false;
+	bool lost = false;
+	bool restarted = false;
 
-	SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
-	InitWindow(win_w, win_h, "rlspr");
-	UTIL_ASSERT(IsWindowReady());
-
-	// plant bombs into random cells
-	// WARN: This must be after after InitWindow (see link below) !!!
-	// https://www.reddit.com/r/raylib/comments/r58340/comment/hmnkc48/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-	for (int i = 0; i < bombs;) {
-		const int x = GetRandomValue(0, width - 1);
-		const int y = GetRandomValue(0, height - 1);
-		struct CellData *cd = cell_get(&arr, x, y);
-		if (cd->planted)
-			continue;
-		cd->planted = true;
-		cell_foreach_around(&arr, x, y, cell_nearby_increment);
-		++i;
+	{  // initialize window
+		const int win_w = (width + (border * 2)) * scale;
+		const int win_h = (height + (border * 2)) * scale;
+		SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
+		InitWindow(win_w, win_h, "rlspr");
+		UTIL_ASSERT(IsWindowReady());
 	}
 
-	while (!WindowShouldClose())
-	{
-		// frame init
-		BeginDrawing();
-		ClearBackground(GRAY);
+	// main game/draw loop
+	while (!WindowShouldClose()) {
 
 		int hovered_x = -1;
 		int hovered_y = -1;
 		struct CellData *hovered_cell = NULL;
 
-		// set hovered_x/y, check if any cell is being hovered
-		const int mouse_x = GetMouseX();
-		const int mouse_y = GetMouseY();
-		if (mouse_x < (border + width) * scale && mouse_x >= border * scale)
-			hovered_x = (mouse_x - border * scale) / scale;
-		if (mouse_y < (border + height) * scale && mouse_y >= border * scale)
-			hovered_y = (mouse_y - border * scale) / scale;
-		if (hovered_x != -1 && hovered_y != -1) {
-			hovered_cell = cell_get(&arr, hovered_x, hovered_y);
-			hovered_cell->hovered = true;
+		// initialize cells array (only if needed)
+		if (arr.data == NULL || restarted) {
+
+			// TODO:
+			// array does not need to be reallocated if it's width and height hasn't changed.
+			// In this case, it should be only memset to 0 to avoid costly operation
+			// BUT width and height are currently static and reallocation is just easier,
+			// so noone cares for now... Also, this will work all the time :)
+			if (restarted)
+				free(arr.data);
+			arr.data = calloc((size_t)(width * height), sizeof(struct CellData));
+			arr.w = width;
+			arr.h = height;
+
+			// plant bombs into random cells
+			for (int i = 0; i < bombs;) {
+				const int x = GetRandomValue(0, width - 1);
+				const int y = GetRandomValue(0, height - 1);
+				struct CellData *cd = cell_get(&arr, x, y);
+				if (cd->planted)
+					continue;
+				cd->planted = true;
+				cell_foreach_around(&arr, x, y, cell_nearby_increment);
+				++i;
+			}
+		}
+
+		// initialize frame
+		BeginDrawing();
+		ClearBackground(GRAY);
+
+		{  // set hovered_x/y, check if any cell is being hovered
+			const int mouse_x = GetMouseX();
+			const int mouse_y = GetMouseY();
+			if (mouse_x < (border + width) * scale && mouse_x >= border * scale)
+				hovered_x = (mouse_x - border * scale) / scale;
+			if (mouse_y < (border + height) * scale && mouse_y >= border * scale)
+				hovered_y = (mouse_y - border * scale) / scale;
+			if (hovered_x != -1 && hovered_y != -1) {
+				hovered_cell = cell_get(&arr, hovered_x, hovered_y);
+				hovered_cell->hovered = true;
+			}
 		}
 
 		// draw cell contents
@@ -232,6 +249,7 @@ main(void)
 		}
 
 		// draw cell borders
+		// FIXME: this gonna break when using width and height that aren't equal
 		for (int i = 0; i <= width + 1; ++i) {
 			const int stride = scale * i;
 			const int start_pos_x = border * scale;
@@ -257,16 +275,11 @@ main(void)
 		}
 
 		// react to LMB click
-		if (
-			true
-			&& hovered_cell != NULL
-			&& hovered_cell->state == CELL_STATE_UNTOUCHED
-			&& IsMouseButtonReleased(MOUSE_BUTTON_LEFT)
-		) {
-			// FIXME: add logic related to winning, loosing and restarting the game
-			bombed = cell_reveal(&arr, hovered_x, hovered_y);
-		}
-		(void)bombed;
+		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+			lost = cell_reveal_recur(&arr, hovered_x, hovered_y);
+
+		// FIXME: add "on lost" logic
+		(void)lost;
 
 		// react to RMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
@@ -289,11 +302,10 @@ main(void)
 			}
 		}
 
-		// zoom-in/out based on mouse-scroll movement (visible in next frame)
-		{
+		{  // zoom-in/out based on mouse-scroll movement (visible in next frame)
 			// TODO: zooming should follow the cursor position
 			// TODO: add ability to scroll/pad the area (by cholding scroll-wheel / mouse3)
-			float mouseWheelMove = GetMouseWheelMove();
+			const float mouseWheelMove = GetMouseWheelMove();
 			scale += (int)mouseWheelMove;
 		}
 
@@ -303,12 +315,12 @@ main(void)
 		DrawFPS(0, 0);
 		EndDrawing();
 	}
-	CloseWindow();
 
-	{  // deinitialize cells array
-		free(arr._data);
-		arr._data = NULL;
-	}
+	// cleanup at the end of the game
+	CloseWindow();
+	// TODO: this may cause double-free
+	free(arr.data);
+	arr.data = NULL;
 
 	return EXIT_SUCCESS;
 }
