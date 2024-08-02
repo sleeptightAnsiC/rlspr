@@ -36,36 +36,6 @@ struct CellArr {
 };
 UTIL_STATIC_ASSERT(sizeof(struct CellArr) == 16);
 
-static struct CellArr
-cell_new(int w, int h)
-{
-	struct CellData *data = calloc((size_t)(w * h), sizeof(struct CellData));
-	struct CellArr arr = {
-		._data = data,
-		.w = w,
-		.h = h,
-	};
-	return arr;
-}
-
-static void
-cell_destroy(struct CellArr *arr)
-{
-	free(arr->_data);
-	arr->_data = NULL;
-}
-
-static int
-cell_xy_to_idx(const struct CellArr *arr, int x, int y)
-{
-	UTIL_ASSERT(arr != NULL);
-	UTIL_ASSERT(x >= 0);
-	UTIL_ASSERT(y >= 0);
-	UTIL_ASSERT(x < arr->w);
-	UTIL_ASSERT(x < arr->h);
-	return (y * arr->w) + x;
-}
-
 static struct CellData *
 cell_get(struct CellArr *arr, int x, int y)
 {
@@ -74,7 +44,7 @@ cell_get(struct CellArr *arr, int x, int y)
 	UTIL_ASSERT(y >= 0);
 	UTIL_ASSERT(x < arr->w);
 	UTIL_ASSERT(x < arr->h);
-	int idx = cell_xy_to_idx(arr, x, y);
+	int idx = (y * arr->w) + x;
 	return &(arr->_data[idx]);
 }
 
@@ -151,7 +121,14 @@ static const int bombs = 10;
 int
 main(void)
 {
-	struct CellArr arr = cell_new(width, height);
+	struct CellArr arr;
+
+	{  // initialize cells array
+		struct CellData *data = calloc((size_t)(width * height), sizeof(struct CellData));
+		arr._data = data;
+		arr.w = width;
+		arr.h = height;
+	}
 
 	// plant bombs into random cells
 	for (int i = 0; i < bombs;) {
@@ -325,6 +302,10 @@ main(void)
 	}
 	CloseWindow();
 
-	cell_destroy(&arr);
+	{  // deinitialize cells array
+		free(arr._data);
+		arr._data = NULL;
+	}
+
 	return EXIT_SUCCESS;
 }
