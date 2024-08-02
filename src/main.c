@@ -100,25 +100,25 @@ cell_reveal(struct CellArr *arr, int x, int y)
 static void
 cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellData *))
 {
-	const bool xg0 = x > 0;
-	const bool xlw = x < arr->w - 1;
-	const bool yg0 = y > 0;
-	const bool ylh = y < arr->h - 1;
-	if (xg0 && yg0)
+	const bool xg = x >= 0 + 1;
+	const bool xl = x < arr->w - 1;
+	const bool yg = y >= 0 + 1;
+	const bool yl = y < arr->h - 1;
+	if (xg && yg)
 		func(cell_get(arr, x-1, y-1));
-	if (xg0)
+	if (xg)
 		func(cell_get(arr, x-1, y));
-	if (xg0 && ylh)
+	if (xg && yl)
 		func(cell_get(arr, x-1, y+1));
-	if (xlw && yg0)
+	if (xl && yg)
 		func(cell_get(arr, x+1, y-1));
-	if (xlw)
+	if (xl)
 		func(cell_get(arr, x+1, y));
-	if (xlw && ylh)
+	if (xl && yl)
 		func(cell_get(arr, x+1, y+1));
-	if (yg0)
+	if (yg)
 		func(cell_get(arr, x, y-1));
-	if (ylh)
+	if (yl)
 		func(cell_get(arr, x, y+1));
 }
 
@@ -128,17 +128,6 @@ cell_nearby_increment(struct CellData *cd)
 	UTIL_ASSERT(cd != NULL);
 	++(cd->nearby);
 }
-
-static void
-cell_plant(struct CellArr *arr, int x, int y)
-{
-	struct CellData *cd = cell_get(arr, x, y);
-	UTIL_ASSERT(!cd->planted);
-	cd->planted = true;
-	cell_foreach_around(arr, x, y, cell_nearby_increment);
-}
-
-#define NUM 10
 
 #define X_NUMBERS_COLORS_MAP \
         X(1, BLUE)           \
@@ -150,23 +139,30 @@ cell_plant(struct CellArr *arr, int x, int y)
         X(7, PURPLE)         \
         X(8, DARKPURPLE)     \
 
+static const int width = 9;
+static const int height = 9;
+static const int bombs = 10;
+
 int
 main(void)
 {
-	struct CellArr arr = cell_new(NUM, NUM);
+	struct CellArr arr = cell_new(width, height);
 
-	// FIXME: this should be semi-random
-	cell_plant(&arr, 2, 5);
-	cell_plant(&arr, 2, 6);
-	cell_plant(&arr, 3, 5);
-	cell_plant(&arr, 2, 9);
-	cell_plant(&arr, 9, 5);
-	cell_plant(&arr, 0, 5);
-	cell_plant(&arr, 0, 0);
+	// plant bombs into random cells
+	for (int i = 0; i < bombs;) {
+		const int x = GetRandomValue(0, width);
+		const int y = GetRandomValue(0, height);
+		struct CellData *cd = cell_get(&arr, x, y);
+		if (cd->planted)
+			continue;
+		cd->planted = true;
+		cell_foreach_around(&arr, x, y, cell_nearby_increment);
+		++i;
+	}
 
 	int border = 1;
 	int scale = 50;
-	int win_w = (NUM + (border * 2)) * scale;
+	int win_w = (width + (border * 2)) * scale;
 	int win_h = win_w;
 	bool bombed = false;
 
@@ -186,9 +182,9 @@ main(void)
 		// set hovered_x/y, check if any cell is being hovered
 		const int mouse_x = GetMouseX();
 		const int mouse_y = GetMouseY();
-		if (mouse_x < (border + NUM) * scale && mouse_x >= border * scale)
+		if (mouse_x < (border + width) * scale && mouse_x >= border * scale)
 			hovered_x = (mouse_x - border * scale) / scale;
-		if (mouse_y < (border + NUM) * scale && mouse_y >= border * scale)
+		if (mouse_y < (border + height) * scale && mouse_y >= border * scale)
 			hovered_y = (mouse_y - border * scale) / scale;
 		if (hovered_x != -1 && hovered_y != -1) {
 			hovered_cell = cell_get(&arr, hovered_x, hovered_y);
@@ -251,17 +247,15 @@ main(void)
 		}
 
 		// draw cell borders
-		// NOTE: this must done be after draw pass to have proper Z-order
-		for (int i = 0; i <= NUM + 1; ++i) {
+		for (int i = 0; i <= width + 1; ++i) {
 			const int stride = scale * i;
-			const int startPos = border * scale;
-			const int endPos = NUM * scale + startPos;
-			DrawLine(startPos, stride, endPos, stride, DARKGRAY);
-			DrawLine(stride, startPos, stride, endPos, DARKGRAY);
+			const int start_pos_x = border * scale;
+			const int end_pos_x = width * scale + start_pos_x;
+			DrawLine(start_pos_x, stride, end_pos_x, stride, DARKGRAY);
+			DrawLine(stride, start_pos_x, stride, end_pos_x, DARKGRAY);
 		}
 
 		// highlight border around currently hovered cell
-		// NOTE: this must done be after draw pass to have proper Z-order
 		if (hovered_cell != NULL) {
 			const int pos_x = (hovered_x + border) * scale;
 			const int pos_y = (hovered_y + border) * scale;

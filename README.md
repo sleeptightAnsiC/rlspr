@@ -3,7 +3,12 @@
 - change dir name 'lib' to 'dep', or remove it entirerly in case there are no more dependencies than Raylib
 - fix issues with building Raylib while using: make CFLAGS=''
 - (in far future) replace current draw pass with GLSL shader
-- see for reference: https://minesweeper-pro.com/introduction/
+
+
+# NOTE (references)
+- https://minesweeper-pro.com/introduction/
+- https://en.wikipedia.org/wiki/Minesweeper_(video_game)
+- https://en.wikipedia.org/wiki/Microsoft_Minesweeper
 
 
 # rlspr
