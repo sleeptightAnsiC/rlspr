@@ -69,6 +69,11 @@ cell_xy_to_idx(const struct CellArr *arr, int x, int y)
 static struct CellData *
 cell_get(struct CellArr *arr, int x, int y)
 {
+	UTIL_ASSERT(arr != NULL);
+	UTIL_ASSERT(x >= 0);
+	UTIL_ASSERT(y >= 0);
+	UTIL_ASSERT(x < arr->w);
+	UTIL_ASSERT(x < arr->h);
 	int idx = cell_xy_to_idx(arr, x, y);
 	return &(arr->_data[idx]);
 }
@@ -150,8 +155,8 @@ main(void)
 
 	// plant bombs into random cells
 	for (int i = 0; i < bombs;) {
-		const int x = GetRandomValue(0, width);
-		const int y = GetRandomValue(0, height);
+		const int x = GetRandomValue(0, width - 1);
+		const int y = GetRandomValue(0, height - 1);
 		struct CellData *cd = cell_get(&arr, x, y);
 		if (cd->planted)
 			continue;
