@@ -167,6 +167,7 @@ main(void)
 				if (cd->bomb)
 					continue;
 				cd->bomb = true;
+				++(cd->nearby);
 				cell_foreach_around(&arr, x, y, cell_nearby_increment);
 				++i;
 			}
@@ -280,7 +281,7 @@ main(void)
 		// adjust cursor visuals
 		if (interactive_cursor) {
 			if (hovered_cell != NULL && !finished) {
-				const bool revealed = hovered_cell->state != CELL_STATE_REVEALED;
+				const bool revealed = hovered_cell->state == CELL_STATE_REVEALED;
 				const int cursor = revealed ? MOUSE_CURSOR_DEFAULT : MOUSE_CURSOR_POINTING_HAND;
 				SetMouseCursor(cursor);
 			} else {
