@@ -17,7 +17,7 @@ struct CellData {
 	uint8_t nearby : 4;
 	// WARN: this one should be 'enum CellState' but it would break the padding
 	uint8_t state: 2;
-	bool planted: 1;
+	bool bomb: 1;
 	bool hovered: 1;
 };
 // kurde balans, git majonez
@@ -106,11 +106,11 @@ cell_nearby_increment(struct CellArr *arr, int x, int y)
 
 // game settings
 // TODO: these should be possible to change at runtime someday
-//       (that's why names are lower-cased, despite
+//       (that's why names are lower-case, despite
 //       that values are clearly known at compile-time)
-static const int width = 10;
-static const int height = 8;
-static const int bombs = 10;
+static const int width = 30;
+static const int height = 16;
+static const int bombs = 99;
 static const int border = 1;
 static const bool interactive_cursor = true;
 static const bool interactive_cell = true;
@@ -123,7 +123,7 @@ main(void)
 	// TODO: would be nice to set it based on screen DPI
 	int scale = 50;
 	bool finished = false;
-	bool restarted = false;
+	bool started = true;
 
 	{  // initialize window
 		const int win_w = (width + (border * 2)) * scale;
@@ -140,33 +140,33 @@ main(void)
 		int hovered_y = -1;
 		struct CellData *hovered_cell = NULL;
 
-		// initialize cells array (only if needed)
-		if (arr.data == NULL || restarted) {
+		// initialize cells array
+		if (started) {
 
-			// TODO:
-			// array does not need to be reallocated if it's width and height hasn't changed.
-			// In this case, it should be only memset to 0 to avoid costly operation
-			// BUT width and height are currently static and reallocation is just easier,
-			// so noone cares for now... Also, this will work all the time :)
-
-			if (restarted) {
+			const size_t nmemb = (size_t)(width * height);
+			const size_t size = sizeof(struct CellData);
+			if (arr.data == NULL) {
+				arr.data = calloc(nmemb, size);
+			} else if ((int)(nmemb) < arr.w * arr.h) {
 				free(arr.data);
-				finished = false;
-				restarted = false;
+				arr.data = calloc(nmemb, size);
+			} else {
+				memset(arr.data, 0, nmemb);
 			}
 
-			arr.data = calloc((size_t)(width * height), sizeof(struct CellData));
 			arr.w = width;
 			arr.h = height;
+			finished = false;
+			started = false;
 
-			// plant bombs into random cells
+			// add bombs into random cells
 			for (int i = 0; i < bombs;) {
 				const int x = GetRandomValue(0, width - 1);
 				const int y = GetRandomValue(0, height - 1);
 				struct CellData *cd = cell_get(&arr, x, y);
-				if (cd->planted)
+				if (cd->bomb)
 					continue;
-				cd->planted = true;
+				cd->bomb = true;
 				cell_foreach_around(&arr, x, y, cell_nearby_increment);
 				++i;
 			}
@@ -214,9 +214,9 @@ main(void)
 			{
 			case CELL_STATE_REVEALED: {
 				// HACK: unique RED background for the bomb causing a game loss
-				const Color color = (finished && cd->planted && cd->hovered) ? (RED) : (DARKGRAY);
+				const Color color = (finished && cd->bomb && cd->hovered) ? (RED) : (DARKGRAY);
 				DrawRectangle(rect_x, rect_y, scale, scale, color);
-				if (cd->planted)
+				if (cd->bomb)
 					goto label_draw_bomb;
 				switch (cd->nearby)
 				{
@@ -235,12 +235,12 @@ main(void)
 				continue;
 			} case CELL_STATE_QUESTIONED:
 			case CELL_STATE_FLAGGED: {
-				const Color color = (finished && !cd->planted) ? (RED) : (ORANGE);
+				const Color color = (finished && !cd->bomb) ? (RED) : (ORANGE);
 				const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
 				DrawText(glyph, char_x, char_y, scale, color);
 				continue;
 			} case CELL_STATE_UNTOUCHED:
-				if (finished && cd-> planted)
+				if (finished && cd-> bomb)
 					goto label_draw_bomb;
 				continue;
 			default:
@@ -280,8 +280,8 @@ main(void)
 		// adjust cursor visuals
 		if (interactive_cursor) {
 			if (hovered_cell != NULL && !finished) {
-				const bool not_revealed = hovered_cell->state != CELL_STATE_REVEALED;
-				const int cursor = not_revealed ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT;
+				const bool revealed = hovered_cell->state != CELL_STATE_REVEALED;
+				const int cursor = revealed ? MOUSE_CURSOR_DEFAULT : MOUSE_CURSOR_POINTING_HAND;
 				SetMouseCursor(cursor);
 			} else {
 				SetMouseCursor(MOUSE_CURSOR_DEFAULT);
@@ -290,7 +290,7 @@ main(void)
 
 		// react to LMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !finished) {
-			if (hovered_cell->planted) {
+			if (hovered_cell->bomb) {
 				finished = true;
 				// HACK: we only reveal the bomb that was hit
 				// in order to highlight it in special way
@@ -336,7 +336,7 @@ main(void)
 
 		// trigger game restart
 		if (IsKeyPressed(KEY_R))
-			restarted = true;
+			started = true;
 
 		// clean up at the end of the frame
 		DrawFPS(0, 0);
