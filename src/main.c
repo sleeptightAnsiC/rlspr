@@ -128,7 +128,7 @@ static const int border = 1;
 int
 main(void)
 {
-	// game state persistent between loop cycles
+	// game/draw state persistent between loop cycles
 	struct CellArr arr = { .data = NULL };
 	int scale = 50;
 	bool lost = false;
@@ -157,8 +157,13 @@ main(void)
 			// In this case, it should be only memset to 0 to avoid costly operation
 			// BUT width and height are currently static and reallocation is just easier,
 			// so noone cares for now... Also, this will work all the time :)
-			if (restarted)
+
+			if (restarted) {
 				free(arr.data);
+				lost = false;
+				restarted = false;
+			}
+
 			arr.data = calloc((size_t)(width * height), sizeof(struct CellData));
 			arr.w = width;
 			arr.h = height;
@@ -274,6 +279,7 @@ main(void)
 		}
 
 		// adjust cursor visuals
+		// FIXME: this wasn't a part of OG game so better remove this
 		if (hovered_cell != NULL && !lost) {
 			const bool not_revealed = hovered_cell->state  != CELL_STATE_REVEALED;
 			const int cursor = not_revealed ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT;
@@ -321,6 +327,10 @@ main(void)
 		// because this was a bomb and we gonna use it for RED highlight
 		if (hovered_cell != NULL && !lost)
 			hovered_cell->hovered = false;
+
+		// trigger game restart
+		if (IsKeyPressed(KEY_R))
+			restarted = true;
 	}
 
 	// cleanup at the end of the game
