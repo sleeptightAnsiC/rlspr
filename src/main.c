@@ -180,7 +180,7 @@ main(void)
 		BeginDrawing();
 		ClearBackground(GRAY);
 
-		{  // set hovered_x/y, check if any cell is being hovered
+		if (!lost) {
 			const int mouse_x = GetMouseX();
 			const int mouse_y = GetMouseY();
 			if (mouse_x < (border + width) * scale && mouse_x >= border * scale)
@@ -195,57 +195,65 @@ main(void)
 
 		// draw cell contents
 		for (int x = 0; x < arr.w; ++x) for (int y = 0; y < arr.h; ++y) {
-			const int char_pos_x = scale * (x + border) + (int)(0.3f * (float)(scale));
-			const int char_pos_y = scale * (y + border) + (int)(0.1f * (float)(scale));
+			const int char_x = scale * (x + border) + (int)(0.3f * (float)(scale));
+			const int char_y = scale * (y + border) + (int)(0.1f * (float)(scale));
+			const int rect_x = (border + x) * scale;
+			const int rect_y = (border + y) * scale;
+			const int scale_half = (int)((float)(scale) * 0.5f);
 			const struct CellData *cd = cell_get(&arr, x, y);
 			if (
 				true
 				&& cd == hovered_cell
 				&& cd->state == CELL_STATE_UNTOUCHED
 				&& IsMouseButtonDown(MOUSE_BUTTON_LEFT)
+				&& !lost
 			) {
-				// FIXME: code repetition
-				const int rect_x = (border + x) * scale;
-				const int rect_y = (border + y) * scale;
 				DrawRectangle(rect_x, rect_y, scale, scale, DARKGRAY);
-			} else switch (cd->state) {
+				continue;
+			}
+			switch (cd->state)
+			{
 			case CELL_STATE_REVEALED: {
-				const int rect_x = (border + x) * scale;
-				const int rect_y = (border + y) * scale;
-				DrawRectangle(rect_x, rect_y, scale, scale, DARKGRAY);
-				if (cd->planted) {
-					const int scale_half = (int)((float)(scale) * 0.5f);
-					const int center_x = scale * (x + border) + scale_half;
-					const int center_y = scale * (y + border) + scale_half;
-					const float radius = (float)(scale_half) * 0.8f;
-					DrawCircle(center_x, center_y, radius, DARKPURPLE);
-				} else switch (cd->nearby) {
-				case 0:
-					break;
-#				define X(NEARBY, COLOR)                                          \
-				case NEARBY:                                                     \
-				        DrawText(#NEARBY, char_pos_x, char_pos_y, scale, COLOR); \
-				        break                                                    \
-				        ;                                                        
+				const Color bg = (lost && cd->planted && cd->hovered) ? (RED) : (DARKGRAY);
+				DrawRectangle(rect_x, rect_y, scale, scale, bg);
+				if (cd->planted)
+					goto label_draw_bomb;
+				switch (cd->nearby)
+				{
+#				define X(NEARBY, COLOR)                                  \
+				case NEARBY:                                             \
+				        DrawText(#NEARBY, char_x, char_y, scale, COLOR); \
+				        continue                                         \
+				        ;                                                
 				X_NUMBERS_COLORS_MAP
 #				undef X
+				case 0:
+					continue;
 				default:
 					UTIL_UNREACHABLE();
-				} //end else switch (cd->nearby)
-				break;
+				} //end switch (cd->nearby)
+				continue;
 			}
 			case CELL_STATE_QUESTIONED:
-				DrawText("?", char_pos_x, char_pos_y, scale, ORANGE);
-				break;
+				DrawText("?", char_x, char_y, scale, ORANGE);
+				continue;
 			case CELL_STATE_FLAGGED:
-				// TODO: draw actual flag glyph
-				DrawText("F", char_pos_x, char_pos_y, scale, ORANGE);
-				break;
+				DrawText("F", char_x, char_y, scale, ORANGE);
+				continue;
 			case CELL_STATE_UNTOUCHED:
-				break;
+				if (lost && cd-> planted)
+					goto label_draw_bomb;
+				continue;
 			default:
 				UTIL_UNREACHABLE();
-			} //end else switch (cd->state)
+			} //ends switch (cd->state)
+		label_draw_bomb: {
+			const int bomb_x = scale * (x + border) + scale_half;
+			const int bomb_y = scale * (y + border) + scale_half;
+			const float bomb_radius = (float)(scale_half) * 0.8f;
+			DrawCircle(bomb_x, bomb_y, bomb_radius, DARKPURPLE);
+			continue;
+		} // label_draw_bomb
 		}
 
 		// draw cell borders
@@ -266,7 +274,7 @@ main(void)
 		}
 
 		// adjust cursor visuals
-		if (hovered_cell != NULL) {
+		if (hovered_cell != NULL && !lost) {
 			const bool not_revealed = hovered_cell->state  != CELL_STATE_REVEALED;
 			const int cursor = not_revealed ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT;
 			SetMouseCursor(cursor);
@@ -275,14 +283,11 @@ main(void)
 		}
 
 		// react to LMB click
-		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !lost)
 			lost = cell_reveal_recur(&arr, hovered_x, hovered_y);
 
-		// FIXME: add "on lost" logic
-		(void)lost;
-
 		// react to RMB click
-		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
+		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && !lost) {
 			const enum CellState hcs = hovered_cell->state;
 			switch (hcs)
 			{
@@ -310,10 +315,12 @@ main(void)
 		}
 
 		// clean up at the end of the frame
-		if (hovered_cell != NULL)
-			hovered_cell->hovered = false;
 		DrawFPS(0, 0);
 		EndDrawing();
+		// HACK: do not remove hover state from cell that lost the game
+		// because this was a bomb and we gonna use it for RED highlight
+		if (hovered_cell != NULL && !lost)
+			hovered_cell->hovered = false;
 	}
 
 	// cleanup at the end of the game

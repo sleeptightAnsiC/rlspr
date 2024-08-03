@@ -2,6 +2,7 @@
 - those files has been taken from mtpl project, clean them up later
 - change dir name 'lib' to 'dep', or remove it entirerly in case there are no more dependencies than Raylib
 - fix issues with building Raylib while using: make CFLAGS=''
+- (in far future) once again, try to build raylib through raw C code, without using Makefile
 - (in far future) replace current draw pass with GLSL shader
 
 
