@@ -199,6 +199,9 @@ main(void)
 		}
 
 		// draw cell contents
+		// TODO:
+		//    this huge block should be the very first thing abstracted away
+		//    there should be a separated translation unit for it (maybe called "draw")
 		for (int x = 0; x < arr.w; ++x) for (int y = 0; y < arr.h; ++y) {
 			const int char_x = scale * (x + border) + (int)(0.3f * (float)(scale));
 			const int char_y = scale * (y + border) + (int)(0.1f * (float)(scale));
@@ -219,8 +222,8 @@ main(void)
 			switch (cd->state)
 			{
 			case CELL_STATE_REVEALED: {
-				const Color bg = (lost && cd->planted && cd->hovered) ? (RED) : (DARKGRAY);
-				DrawRectangle(rect_x, rect_y, scale, scale, bg);
+				const Color color = (lost && cd->planted && cd->hovered) ? (RED) : (DARKGRAY);
+				DrawRectangle(rect_x, rect_y, scale, scale, color);
 				if (cd->planted)
 					goto label_draw_bomb;
 				switch (cd->nearby)
@@ -238,20 +241,20 @@ main(void)
 					UTIL_UNREACHABLE();
 				} //end switch (cd->nearby)
 				continue;
-			}
-			case CELL_STATE_QUESTIONED:
-				DrawText("?", char_x, char_y, scale, ORANGE);
+			} case CELL_STATE_QUESTIONED:
+			case CELL_STATE_FLAGGED: {
+				const Color color = (lost && !cd->planted) ? (RED) : (ORANGE);
+				const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
+				DrawText(glyph, char_x, char_y, scale, color);
 				continue;
-			case CELL_STATE_FLAGGED:
-				DrawText("F", char_x, char_y, scale, ORANGE);
-				continue;
-			case CELL_STATE_UNTOUCHED:
+			} case CELL_STATE_UNTOUCHED:
 				if (lost && cd-> planted)
 					goto label_draw_bomb;
 				continue;
 			default:
 				UTIL_UNREACHABLE();
 			} //ends switch (cd->state)
+		// FIXME: HAHAHA, turn this label into the function already...
 		label_draw_bomb: {
 			const int bomb_x = scale * (x + border) + scale_half;
 			const int bomb_y = scale * (y + border) + scale_half;
