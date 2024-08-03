@@ -43,7 +43,7 @@ cell_get(struct CellArr *arr, int x, int y)
 	UTIL_ASSERT(x >= 0);
 	UTIL_ASSERT(y >= 0);
 	UTIL_ASSERT(x < arr->w);
-	UTIL_ASSERT(x < arr->h);
+	UTIL_ASSERT(y < arr->h);
 	int idx = (y * arr->w) + x;
 	return &(arr->data[idx]);
 }
@@ -108,8 +108,8 @@ cell_nearby_increment(struct CellArr *arr, int x, int y)
 // TODO: these should be possible to change at runtime someday
 //       (that's why names are lower-cased, despite
 //       that values are clearly known at compile-time)
-static const int width = 9;
-static const int height = 9;
+static const int width = 10;
+static const int height = 8;
 static const int bombs = 10;
 static const int border = 1;
 static const bool interactive_cursor = true;
@@ -120,6 +120,7 @@ main(void)
 {
 	// game/draw state persistent between loop cycles
 	struct CellArr arr = { .data = NULL };
+	// TODO: would be nice to set it based on screen DPI
 	int scale = 50;
 	bool finished = false;
 	bool restarted = false;
@@ -256,13 +257,17 @@ main(void)
 		}
 
 		// draw cell borders
-		// FIXME: this gonna break when using width and height that aren't equal
+		for (int i = 0; i <= height + 1; ++i) {
+			const int pos_x_start = border * scale;
+			const int pos_x_end = width * scale + pos_x_start;
+			const int pos_y = i * scale;
+			DrawLine(pos_x_start, pos_y, pos_x_end, pos_y, DARKGRAY);
+		}
 		for (int i = 0; i <= width + 1; ++i) {
-			const int stride = scale * i;
-			const int start_pos_x = border * scale;
-			const int end_pos_x = width * scale + start_pos_x;
-			DrawLine(start_pos_x, stride, end_pos_x, stride, DARKGRAY);
-			DrawLine(stride, start_pos_x, stride, end_pos_x, DARKGRAY);
+			const int pos_x = i * scale;
+			const int pos_y_start = border * scale;
+			const int pos_y_end = height * scale + pos_y_start;
+			DrawLine(pos_x, pos_y_start, pos_x, pos_y_end, DARKGRAY);
 		}
 
 		// highlight border around currently hovered cell
