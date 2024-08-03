@@ -23,7 +23,7 @@ struct CellData {
 // kurde balans, git majonez
 UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
 
-// FIXME:
+// TODO:
 // Everything uses ambigious signed 'int'
 // because Raylib uses it everywhere
 // but all those ints should be 'uint32_t' instead!
@@ -48,61 +48,49 @@ cell_get(struct CellArr *arr, int x, int y)
 	return &(arr->data[idx]);
 }
 
-// TODO: this returns true in case of revealing the bomb
-//    but I'm not sure if placing said logic here is a good idea
-static bool
-cell_reveal_recur(struct CellArr *arr, int x, int y)
-{
-	struct CellData *ca = cell_get(arr, x, y);
-	if (ca->state == CELL_STATE_UNTOUCHED) {
-		// FIXME: do I actually want to reveal cell when it's planted with bomb??
-		ca->state = CELL_STATE_REVEALED;
-		if (ca->planted)
-			return true;
-		if (ca->nearby == 0) {
-			if (x > 0)
-				cell_reveal_recur(arr, x-1, y);
-			if (x < arr->w - 1)
-				cell_reveal_recur(arr, x+1, y);
-			if (y > 0)
-				cell_reveal_recur(arr, x, y-1);
-			if (y < arr->h - 1)
-				cell_reveal_recur(arr, x, y+1);
-		}
-	}
-	return false;
-}
-
 static void
-cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellData *))
+cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellArr *arr, int x, int y))
 {
 	const bool xg = x >= 0 + 1;
 	const bool xl = x < arr->w - 1;
 	const bool yg = y >= 0 + 1;
 	const bool yl = y < arr->h - 1;
 	if (xg && yg)
-		func(cell_get(arr, x-1, y-1));
+		func(arr, x-1, y-1);
 	if (xg)
-		func(cell_get(arr, x-1, y));
+		func(arr, x-1, y);
 	if (xg && yl)
-		func(cell_get(arr, x-1, y+1));
+		func(arr, x-1, y+1);
 	if (xl && yg)
-		func(cell_get(arr, x+1, y-1));
+		func(arr, x+1, y-1);
 	if (xl)
-		func(cell_get(arr, x+1, y));
+		func(arr, x+1, y);
 	if (xl && yl)
-		func(cell_get(arr, x+1, y+1));
+		func(arr, x+1, y+1);
 	if (yg)
-		func(cell_get(arr, x, y-1));
+		func(arr, x, y-1);
 	if (yl)
-		func(cell_get(arr, x, y+1));
+		func(arr, x, y+1);
+}
+
+// TODO: this returns true in case of revealing the bomb
+//    but I'm not sure if placing said logic here is a good idea
+static void
+cell_reveal_recur(struct CellArr *arr, int x, int y)
+{
+	struct CellData *ca = cell_get(arr, x, y);
+	if (ca->state == CELL_STATE_UNTOUCHED) {
+		ca->state = CELL_STATE_REVEALED;
+		if (ca->nearby == 0)
+			cell_foreach_around(arr, x, y, cell_reveal_recur);
+	}
 }
 
 // NOTE: this is passed as a function pointer in only once place
 static void
-cell_nearby_increment(struct CellData *cd)
+cell_nearby_increment(struct CellArr *arr, int x, int y)
 {
-	UTIL_ASSERT(cd != NULL);
+	struct CellData *cd = cell_get(arr, x, y);
 	++(cd->nearby);
 }
 
@@ -124,6 +112,8 @@ static const int width = 9;
 static const int height = 9;
 static const int bombs = 10;
 static const int border = 1;
+static const bool interactive_cursor = true;
+static const bool interactive_cell = true;
 
 int
 main(void)
@@ -131,7 +121,7 @@ main(void)
 	// game/draw state persistent between loop cycles
 	struct CellArr arr = { .data = NULL };
 	int scale = 50;
-	bool lost = false;
+	bool finished = false;
 	bool restarted = false;
 
 	{  // initialize window
@@ -160,7 +150,7 @@ main(void)
 
 			if (restarted) {
 				free(arr.data);
-				lost = false;
+				finished = false;
 				restarted = false;
 			}
 
@@ -185,7 +175,7 @@ main(void)
 		BeginDrawing();
 		ClearBackground(GRAY);
 
-		if (!lost) {
+		if (!finished) {
 			const int mouse_x = GetMouseX();
 			const int mouse_y = GetMouseY();
 			if (mouse_x < (border + width) * scale && mouse_x >= border * scale)
@@ -214,7 +204,7 @@ main(void)
 				&& cd == hovered_cell
 				&& cd->state == CELL_STATE_UNTOUCHED
 				&& IsMouseButtonDown(MOUSE_BUTTON_LEFT)
-				&& !lost
+				&& !finished
 			) {
 				DrawRectangle(rect_x, rect_y, scale, scale, DARKGRAY);
 				continue;
@@ -222,7 +212,8 @@ main(void)
 			switch (cd->state)
 			{
 			case CELL_STATE_REVEALED: {
-				const Color color = (lost && cd->planted && cd->hovered) ? (RED) : (DARKGRAY);
+				// HACK: unique RED background for the bomb causing a game loss
+				const Color color = (finished && cd->planted && cd->hovered) ? (RED) : (DARKGRAY);
 				DrawRectangle(rect_x, rect_y, scale, scale, color);
 				if (cd->planted)
 					goto label_draw_bomb;
@@ -243,12 +234,12 @@ main(void)
 				continue;
 			} case CELL_STATE_QUESTIONED:
 			case CELL_STATE_FLAGGED: {
-				const Color color = (lost && !cd->planted) ? (RED) : (ORANGE);
+				const Color color = (finished && !cd->planted) ? (RED) : (ORANGE);
 				const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
 				DrawText(glyph, char_x, char_y, scale, color);
 				continue;
 			} case CELL_STATE_UNTOUCHED:
-				if (lost && cd-> planted)
+				if (finished && cd-> planted)
 					goto label_draw_bomb;
 				continue;
 			default:
@@ -275,28 +266,37 @@ main(void)
 		}
 
 		// highlight border around currently hovered cell
-		if (hovered_cell != NULL) {
+		if (interactive_cell && hovered_cell != NULL) {
 			const int pos_x = (hovered_x + border) * scale;
 			const int pos_y = (hovered_y + border) * scale;
 			DrawRectangleLines(pos_x, pos_y, scale, scale, BLACK);
 		}
 
 		// adjust cursor visuals
-		// FIXME: this wasn't a part of OG game so better remove this
-		if (hovered_cell != NULL && !lost) {
-			const bool not_revealed = hovered_cell->state  != CELL_STATE_REVEALED;
-			const int cursor = not_revealed ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT;
-			SetMouseCursor(cursor);
-		} else {
-			SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+		if (interactive_cursor) {
+			if (hovered_cell != NULL && !finished) {
+				const bool not_revealed = hovered_cell->state != CELL_STATE_REVEALED;
+				const int cursor = not_revealed ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT;
+				SetMouseCursor(cursor);
+			} else {
+				SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+			}
 		}
 
 		// react to LMB click
-		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !lost)
-			lost = cell_reveal_recur(&arr, hovered_x, hovered_y);
+		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !finished) {
+			if (hovered_cell->planted) {
+				finished = true;
+				// HACK: we only reveal the bomb that was hit
+				// in order to highlight it in special way
+				hovered_cell->state = CELL_STATE_REVEALED;
+			} else {
+				cell_reveal_recur(&arr, hovered_x, hovered_y);
+			}
+		}
 
 		// react to RMB click
-		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && !lost) {
+		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && !finished) {
 			const enum CellState hcs = hovered_cell->state;
 			switch (hcs)
 			{
@@ -323,22 +323,23 @@ main(void)
 			scale += (int)mouseWheelMove;
 		}
 
-		// clean up at the end of the frame
-		DrawFPS(0, 0);
-		EndDrawing();
 		// HACK: do not remove hover state from cell that lost the game
-		// because this was a bomb and we gonna use it for RED highlight
-		if (hovered_cell != NULL && !lost)
+		// because this was a bomb that caused a loss,
+		// and we gonna use this information to draw unique RED background
+		if (hovered_cell != NULL && !finished)
 			hovered_cell->hovered = false;
 
 		// trigger game restart
 		if (IsKeyPressed(KEY_R))
 			restarted = true;
+
+		// clean up at the end of the frame
+		DrawFPS(0, 0);
+		EndDrawing();
 	}
 
 	// cleanup at the end of the game
 	CloseWindow();
-	// TODO: this may cause double-free
 	free(arr.data);
 	arr.data = NULL;
 
