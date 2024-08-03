@@ -1,13 +1,14 @@
-# TODO
+# TODOs
 - add board (with emoji face, bomb count and time) on the top edge of the window
 - those files has been taken from mtpl project, clean them up later
 - change dir name 'lib' to 'dep', or remove it entirerly in case there are no more dependencies than Raylib
 - fix issues with building Raylib while using: make CFLAGS=''
+- I don't like the fact that everything uses ambigious 'int'. This is because raylib's API uses it everywhere but I should probably take care of it
 - (in far future) once again, try to build raylib through raw C code, without using Makefile
 - (in far future) replace current draw pass with GLSL shader
 
 
-# NOTE (references)
+# NOTEs
 - https://minesweeper-pro.com/introduction/
 - https://en.wikipedia.org/wiki/Minesweeper_(video_game)
 - https://en.wikipedia.org/wiki/Microsoft_Minesweeper

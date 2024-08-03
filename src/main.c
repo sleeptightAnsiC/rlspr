@@ -3,96 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "./util.h"
 #include "raylib.h"
-
-enum CellState {
-	CELL_STATE_UNTOUCHED = 0,
-	CELL_STATE_REVEALED,
-	CELL_STATE_FLAGGED,
-	CELL_STATE_QUESTIONED,
-};
-
-struct CellData {
-	uint8_t nearby : 4;
-	// WARN: this one should be 'enum CellState' but it would break the padding
-	uint8_t state: 2;
-	bool bomb: 1;
-	bool hovered: 1;
-};
-// kurde balans, git majonez
-UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
-
-// TODO:
-// Everything uses ambigious signed 'int'
-// because Raylib uses it everywhere
-// but all those ints should be 'uint32_t' instead!
-// For now it's just easier to keep as it is...
-
-struct CellArr {
-	struct CellData *data;
-	int w;
-	int h;
-};
-UTIL_STATIC_ASSERT(sizeof(struct CellArr) == 16);
-
-static struct CellData *
-cell_get(struct CellArr *arr, int x, int y)
-{
-	UTIL_ASSERT(arr != NULL);
-	UTIL_ASSERT(x >= 0);
-	UTIL_ASSERT(y >= 0);
-	UTIL_ASSERT(x < arr->w);
-	UTIL_ASSERT(y < arr->h);
-	int idx = (y * arr->w) + x;
-	return &(arr->data[idx]);
-}
-
-static void
-cell_foreach_around(struct CellArr *arr, int x, int y, void(func)(struct CellArr *arr, int x, int y))
-{
-	const bool xg = x >= 0 + 1;
-	const bool xl = x < arr->w - 1;
-	const bool yg = y >= 0 + 1;
-	const bool yl = y < arr->h - 1;
-	if (xg && yg)
-		func(arr, x-1, y-1);
-	if (xg)
-		func(arr, x-1, y);
-	if (xg && yl)
-		func(arr, x-1, y+1);
-	if (xl && yg)
-		func(arr, x+1, y-1);
-	if (xl)
-		func(arr, x+1, y);
-	if (xl && yl)
-		func(arr, x+1, y+1);
-	if (yg)
-		func(arr, x, y-1);
-	if (yl)
-		func(arr, x, y+1);
-}
-
-// TODO: this returns true in case of revealing the bomb
-//    but I'm not sure if placing said logic here is a good idea
-static void
-cell_reveal_recur(struct CellArr *arr, int x, int y)
-{
-	struct CellData *ca = cell_get(arr, x, y);
-	if (ca->state == CELL_STATE_UNTOUCHED) {
-		ca->state = CELL_STATE_REVEALED;
-		if (ca->nearby == 0)
-			cell_foreach_around(arr, x, y, cell_reveal_recur);
-	}
-}
-
-// NOTE: this is passed as a function pointer in only once place
-static void
-cell_nearby_increment(struct CellArr *arr, int x, int y)
-{
-	struct CellData *cd = cell_get(arr, x, y);
-	++(cd->nearby);
-}
+#include "./util.h"
+#include "./cell.h"
 
 #define X_NUMBERS_COLORS_MAP \
         X(1, BLUE)           \
@@ -114,6 +27,7 @@ static const int bombs = 99;
 static const int border = 1;
 static const bool interactive_cursor = true;
 static const bool interactive_cell = true;
+static const bool safe_first_try = true;
 
 int
 main(void)
@@ -157,18 +71,14 @@ main(void)
 			arr.w = width;
 			arr.h = height;
 			finished = false;
-			started = false;
 
 			// add bombs into random cells
 			for (int i = 0; i < bombs;) {
 				const int x = GetRandomValue(0, width - 1);
 				const int y = GetRandomValue(0, height - 1);
-				struct CellData *cd = cell_get(&arr, x, y);
-				if (cd->bomb)
+				if (cell_bomb_get(&arr, x, y))
 					continue;
-				cd->bomb = true;
-				++(cd->nearby);
-				cell_foreach_around(&arr, x, y, cell_nearby_increment);
+				cell_bomb_set(&arr, x, y, true);
 				++i;
 			}
 		}
@@ -215,11 +125,11 @@ main(void)
 			{
 			case CELL_STATE_REVEALED: {
 				// HACK: unique RED background for the bomb causing a game loss
-				const Color color = (finished && cd->bomb && cd->hovered) ? (RED) : (DARKGRAY);
+				const Color color = (finished && cd->_bomb && cd->hovered) ? (RED) : (DARKGRAY);
 				DrawRectangle(rect_x, rect_y, scale, scale, color);
-				if (cd->bomb)
+				if (cd->_bomb)
 					goto label_draw_bomb;
-				switch (cd->nearby)
+				switch (cd->_nearby)
 				{
 #				define X(NEARBY, COLOR)                                  \
 				case NEARBY:                                             \
@@ -236,12 +146,12 @@ main(void)
 				continue;
 			} case CELL_STATE_QUESTIONED:
 			case CELL_STATE_FLAGGED: {
-				const Color color = (finished && !cd->bomb) ? (RED) : (ORANGE);
+				const Color color = (finished && !cd->_bomb) ? (RED) : (ORANGE);
 				const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
 				DrawText(glyph, char_x, char_y, scale, color);
 				continue;
 			} case CELL_STATE_UNTOUCHED:
-				if (finished && cd-> bomb)
+				if (finished && cd-> _bomb)
 					goto label_draw_bomb;
 				continue;
 			default:
@@ -291,14 +201,15 @@ main(void)
 
 		// react to LMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !finished) {
-			if (hovered_cell->bomb) {
+			if (safe_first_try && started && hovered_cell->_bomb) {
+
+			} if (hovered_cell->_bomb) {
 				finished = true;
-				// HACK: we only reveal the bomb that was hit
-				// in order to highlight it in special way
 				hovered_cell->state = CELL_STATE_REVEALED;
 			} else {
 				cell_reveal_recur(&arr, hovered_x, hovered_y);
 			}
+			started = false;
 		}
 
 		// react to RMB click
