@@ -21,13 +21,14 @@
 // TODO: these should be possible to change at runtime someday
 //       (that's why names are lower-case, despite
 //       that values are clearly known at compile-time)
-static const int width = 30;
-static const int height = 16;
-static const int bombs = 99;
+static const int width = 9;
+static const int height = 9;
+static const int bombs = 10;
 static const int border = 1;
 static const bool interactive_cursor = true;
 static const bool interactive_cell = true;
 static const bool safe_first_try = true;
+
 
 int
 main(void)
@@ -62,10 +63,10 @@ main(void)
 			for (int i = 0; i < bombs;) {
 				const int x = GetRandomValue(0, width - 1);
 				const int y = GetRandomValue(0, height - 1);
-				struct CellData *cd = cell_get(&arr, x, y);
+				struct CellData *cd = cell_at(&arr, x, y);
 				if (cd->_bomb)
 					continue;
-				cell_bomb_set(&arr, x, y, true);
+				cell_bomb_plant(&arr, x, y);
 				++i;
 			}
 		}
@@ -82,7 +83,7 @@ main(void)
 			if (mouse_y < (border + height) * scale && mouse_y >= border * scale)
 				hovered_y = (mouse_y - border * scale) / scale;
 			if (hovered_x != -1 && hovered_y != -1) {
-				hovered_cell = cell_get(&arr, hovered_x, hovered_y);
+				hovered_cell = cell_at(&arr, hovered_x, hovered_y);
 				hovered_cell->hovered = true;
 			}
 		}
@@ -97,7 +98,7 @@ main(void)
 			const int rect_x = (border + x) * scale;
 			const int rect_y = (border + y) * scale;
 			const int scale_half = (int)((float)(scale) * 0.5f);
-			const struct CellData *cd = cell_get(&arr, x, y);
+			const struct CellData *cd = cell_at(&arr, x, y);
 			if (
 				true
 				&& cd == hovered_cell
@@ -131,8 +132,9 @@ main(void)
 					UTIL_UNREACHABLE();
 				} //end switch (cd->nearby)
 				continue;
-			} case CELL_STATE_QUESTIONED:
-			case CELL_STATE_FLAGGED: {
+			} case CELL_STATE_QUESTIONED: {
+				// FALLTHROUGH
+			} case CELL_STATE_FLAGGED: {
 				const Color color = (finished && !cd->_bomb) ? (RED) : (ORANGE);
 				const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
 				DrawText(glyph, char_x, char_y, scale, color);
@@ -188,9 +190,19 @@ main(void)
 
 		// react to LMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !finished) {
-			if (safe_first_try && started && hovered_cell->_bomb) {
-
-			} if (hovered_cell->_bomb) {
+			while (safe_first_try && started && hovered_cell->_nearby != 0) {
+				cell_initialize(&arr, width, height);
+				for (int i = 0; i < bombs;) {
+					const int x = GetRandomValue(0, width - 1);
+					const int y = GetRandomValue(0, height - 1);
+					struct CellData *cd = cell_at(&arr, x, y);
+					if (cd->_bomb)
+						continue;
+					cell_bomb_plant(&arr, x, y);
+					++i;
+				}
+			}
+			if (hovered_cell->_bomb) {
 				finished = true;
 				hovered_cell->state = CELL_STATE_REVEALED;
 			} else {
@@ -237,12 +249,9 @@ main(void)
 		if (IsKeyPressed(KEY_R))
 			started = true;
 
-		// clean up at the end of the frame
-		DrawFPS(0, 0);
 		EndDrawing();
 	}
 
-	// cleanup at the end of the game
 	CloseWindow();
 	cell_destroy(&arr);
 	return EXIT_SUCCESS;

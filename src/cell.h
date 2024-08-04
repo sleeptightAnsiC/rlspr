@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "./util.h"
 
+
 enum CellState {
 	CELL_STATE_UNTOUCHED = 0,
 	CELL_STATE_REVEALED,
@@ -14,9 +15,9 @@ enum CellState {
 
 struct CellData {
 	uint8_t _nearby : 4;
-	uint8_t state: 2;
-	bool _bomb: 1;
-	bool hovered: 1;
+	uint8_t state : 2;
+	bool _bomb : 1;
+	bool hovered : 1;
 };
 UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
 
@@ -28,10 +29,9 @@ struct CellArr {
 UTIL_STATIC_ASSERT(sizeof(struct CellArr) == 16);
 
 
-struct CellData *   cell_get              (struct CellArr *arr, int x, int y);
-void                cell_foreach_around   (struct CellArr *arr, int x, int y, void(func)(struct CellArr *arr, int x, int y));
+struct CellData *   cell_at               (struct CellArr *arr, int x, int y);
 void                cell_reveal_recur     (struct CellArr *arr, int x, int y);
-void                cell_bomb_set         (struct CellArr *arr, int x, int y, bool bomb);
+void                cell_bomb_plant       (struct CellArr *arr, int x, int y);
 void                cell_initialize       (struct CellArr *arr_out, int w, int h);
 void                cell_destroy          (struct CellArr *arr_out);
 
