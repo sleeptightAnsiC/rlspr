@@ -1,6 +1,8 @@
 
 ### variables:
 
+PLATFORM=PLATFORM_DESKTOP
+
 # CC = cc
 # CC = c99
 CC = gcc
@@ -18,7 +20,7 @@ OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
 EXE = $(BINDIR)/rlspr
 
 # CFLAGS = @./$(RCPDIR)/flags_cc.txt
-CFLAGS = @./$(RCPDIR)/flags_gcc.txt
+# CFLAGS = @./$(RCPDIR)/flags_gcc.txt
 # CFLAGS = @./$(RCPDIR)/flags_clang.txt
 # CFLAGS = @./$(RCPDIR)/flags_tcc.txt
 
@@ -56,7 +58,7 @@ $(EXE): $(TMPDIR)/Makefile.mk $(TMPDIR)/raylib.txt always
 $(TMPDIR)/raylib.txt: $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
 	$(MAKE) clean -C $(RAYDIR)
 	cd $(RAYDIR) && git restore .
-	env -uCFLAGS $(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=PLATFORM_DESKTOP -j -C $(RAYDIR)
+	env -uCFLAGS $(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=$(PLATFORM) -j -C $(RAYDIR)
 	\
 	for ro in $$(ls $(RAYDIR)/*.o); do \
 		cp -f $$ro $(TMPDIR)/raylib_$$(basename $$ro); \

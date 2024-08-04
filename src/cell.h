@@ -26,8 +26,6 @@ struct CellArr {
 	int w;
 	int h;
 };
-UTIL_STATIC_ASSERT(sizeof(struct CellArr) == 16);
-
 
 struct CellData *   cell_at               (struct CellArr *arr, int x, int y);
 void                cell_reveal_recur     (struct CellArr *arr, int x, int y);
