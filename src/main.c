@@ -56,27 +56,14 @@ main(void)
 
 		// initialize cells array
 		if (started) {
-
-			const size_t nmemb = (size_t)(width * height);
-			const size_t size = sizeof(struct CellData);
-			if (arr.data == NULL) {
-				arr.data = calloc(nmemb, size);
-			} else if ((int)(nmemb) < arr.w * arr.h) {
-				free(arr.data);
-				arr.data = calloc(nmemb, size);
-			} else {
-				memset(arr.data, 0, nmemb);
-			}
-
-			arr.w = width;
-			arr.h = height;
+			cell_initialize(&arr, width, height);
 			finished = false;
-
 			// add bombs into random cells
 			for (int i = 0; i < bombs;) {
 				const int x = GetRandomValue(0, width - 1);
 				const int y = GetRandomValue(0, height - 1);
-				if (cell_bomb_get(&arr, x, y))
+				struct CellData *cd = cell_get(&arr, x, y);
+				if (cd->_bomb)
 					continue;
 				cell_bomb_set(&arr, x, y, true);
 				++i;
@@ -257,8 +244,6 @@ main(void)
 
 	// cleanup at the end of the game
 	CloseWindow();
-	free(arr.data);
-	arr.data = NULL;
-
+	cell_destroy(&arr);
 	return EXIT_SUCCESS;
 }

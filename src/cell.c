@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <string.h>
 #include "./cell.h"
+#include "util.h"
 
 
-// NOTE: those two are passed as a function pointer in only once place
+// NOTE: those two are passed as a function pointer in only one place
 static void _nearby_increment(struct CellArr *arr, int x, int y) { ++(cell_get(arr, x, y)->_nearby); }
 static void _nearby_decrement(struct CellArr *arr, int x, int y) { --(cell_get(arr, x, y)->_nearby); }
 
@@ -66,4 +68,31 @@ cell_get(struct CellArr *arr, int x, int y)
 	int idx = (y * arr->w) + x;
 	return &(arr->data[idx]);
 }
+
+void
+cell_initialize(struct CellArr *arr_out, int w, int h)
+{
+	UTIL_ASSERT(arr_out != NULL);
+	const size_t nmemb = (size_t)(w * h);
+	const size_t size = sizeof(struct CellData);
+	if (arr_out->data == NULL) {
+		arr_out->data = calloc(nmemb, size);
+	} else if ((int)(nmemb) < arr_out->w * arr_out->h) {
+		free(arr_out->data);
+		arr_out->data = calloc(nmemb, size);
+	} else {
+		memset(arr_out->data, 0, nmemb);
+	}
+	arr_out->w = w;
+	arr_out->h = h;
+}
+
+void
+cell_destroy (struct CellArr *arr_out)
+{
+	UTIL_ASSERT(arr_out != NULL);
+	free(arr_out->data);
+	arr_out->data = NULL;
+}
+
 
