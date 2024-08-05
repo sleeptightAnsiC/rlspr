@@ -45,9 +45,10 @@ _reveal_recur(struct CellArr *arr, int x, int y, void *b_bomb_out)
 	if (cd->state == CELL_STATE_UNTOUCHED) {
 		cd->state = CELL_STATE_REVEALED;
 		const bool bomb = cd->_bomb;
-		*(bool *)(b_bomb_out) = bomb;
-		if (bomb)
+		if (bomb) {
 			cd->hovered = true;
+			*(bool *)(b_bomb_out) = bomb;
+		}
 		if (cd->_nearby == 0 && !bomb)
 			_foreach_around(arr, x, y, b_bomb_out, _reveal_recur);
 	}
