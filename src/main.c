@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "raylib.h"
+#include "./raylib.h"
 #include "./util.h"
 #include "./cell.h"
 
@@ -57,7 +57,7 @@ main(void)
 
 		// initialize cells array
 		if (started) {
-			cell_initialize(&arr, width, height);
+			cell_setup(&arr, width, height);
 			finished = false;
 			// add bombs into random cells
 			for (int i = 0; i < bombs;) {
@@ -191,7 +191,7 @@ main(void)
 		// react to LMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !finished) {
 			while (safe_first_try && started && hovered_cell->_nearby != 0) {
-				cell_initialize(&arr, width, height);
+				cell_setup(&arr, width, height);
 				for (int i = 0; i < bombs;) {
 					const int x = GetRandomValue(0, width - 1);
 					const int y = GetRandomValue(0, height - 1);
@@ -202,12 +202,9 @@ main(void)
 					++i;
 				}
 			}
-			if (hovered_cell->_bomb) {
-				finished = true;
-				hovered_cell->state = CELL_STATE_REVEALED;
-			} else {
-				cell_reveal_recur(&arr, hovered_x, hovered_y);
-			}
+			// HACK: this may backfire if I ever start messing with 'finished'
+			void *b_bomb_hit = (void*)(&finished);
+			cell_reveal_recur(&arr, hovered_x, hovered_y, b_bomb_hit);
 			started = false;
 		}
 
