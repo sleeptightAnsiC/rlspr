@@ -1,22 +1,28 @@
 #!/usr/bin/env sh
 # WARN: MUST BE CALLED FROM PROJECT ROOT DIRECTORY!
 
+# https://github.com/raysan5/raylib/wiki/Working-for-Web-(HTML5)
+
 set -euo pipefail
 
-TMP="tmp/emcc"
-BIN="bin/emcc"
-SRC="src"
-RCP="rcp"
-RAYSRC=lib/raylib/src
+SRCDIR="src"
+RCPDIR="rcp"
+RAYDIR="lib/raylib/src"
 
-for i in emcc zip; do
-	which $i > /dev/null || exit 1
-done
+TMPDIR="tmp/emcc"
+BINDIR="bin/emcc"
+PKGDIR="pkg/emcc"
+mkdir -p $TMPDIR $BINDIR $PKGDIR
 
-mkdir -p $TMP $BIN
+which emcc > /dev/null || exit 1
 
-# https://github.com/raysan5/raylib/wiki/Working-for-Web-%28HTML5%29#21-command-line-compilation
-pushd $RAYSRC
+# FIXME:
+# I have no idea why everything breaks when I put the code below into forloop
+# or when I try to build it outside of raylib/src directory
+# Perhaps compiler links/includes something I don't know about implicitly...
+# INCREMENT THE COUNTER EACH TIME YOU FAILED TO FIX THIS SH1T: 3
+
+pushd $RAYDIR
 make clean
 emcc -c rcore.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
 emcc -c rshapes.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
@@ -27,9 +33,10 @@ emcc -c utils.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
 emcc -c raudio.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
 popd
 
-mv $RAYSRC/*.o $TMP
+mv $RAYDIR/*.o $TMPDIR
 
-emcc $TMP/*.o $SRC/*.c --shell-file $RCP/shell.html -s USE_GLFW=3 -s ASYNCIFY -o $BIN/index.html
+emcc $TMPDIR/*.o $SRCDIR/*.c --shell-file $RAYDIR/minshell.html -s USE_GLFW=3 -s ASYNCIFY -o $BINDIR/index.html
 
-zip -u $BIN/rlspr.zip $BIN/index*
+which zip > /dev/null || exit 1
+zip -u $PKGDIR/rlspr.zip $BINDIR/index*
 
