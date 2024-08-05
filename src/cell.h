@@ -27,11 +27,11 @@ struct CellArr {
 	int h;
 };
 
-struct CellData *   cell_at             (struct CellArr *arr, int x, int y);
-void                cell_reveal_recur   (struct CellArr *arr, int x, int y, void *b_bomb_out);
-void                cell_bomb_plant     (struct CellArr *arr, int x, int y);
-void                cell_setup          (struct CellArr *arr_out, int w, int h);
-void                cell_destroy        (struct CellArr *arr_out);
+struct CellData * cell_at(struct CellArr *arr, int x, int y);
+bool cell_reveal(struct CellArr *arr, int x, int y);
+void cell_bomb_plant(struct CellArr *arr, int x, int y);
+void cell_setup(struct CellArr *arr_out, int w, int h);
+void cell_destroy(struct CellArr *arr_out);
 
 
 #endif

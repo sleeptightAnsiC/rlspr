@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "./cell.h"
@@ -6,18 +7,49 @@
 
 static void _foreach_around(struct CellArr *arr, int x, int y, void *data, void(func)(struct CellArr *arr, int x, int y, void *data));
 static void _nearby_increment(struct CellArr *arr, int x, int y, void *_unused);
+static void _reveal_recur(struct CellArr *arr, int x, int y, void *b_bomb_out);
+static void _flagged_count(struct CellArr *arr, int x, int y, void *i_count_out);
 
+static void
+_flagged_count(struct CellArr *arr, int x, int y, void *i_count_out)
+{
+	const struct CellData *cd = cell_at(arr, x, y);
+	if (cd->state == CELL_STATE_FLAGGED) {
+		int *count = (int *)(i_count_out);
+		++(*count);
+	}
+}
 
-void
-cell_reveal_recur(struct CellArr *arr, int x, int y, void *b_bomb_out)
+bool
+cell_reveal(struct CellArr *arr, int x, int y)
+{
+	struct CellData *cd = cell_at(arr, x, y);
+	bool bomb_hit = false;
+	void *b_bomb_hit_inout = (void *)(&bomb_hit);
+	if (cd->state == CELL_STATE_UNTOUCHED) {
+		_reveal_recur(arr, x, y, b_bomb_hit_inout);
+	} else if (cd->state == CELL_STATE_REVEALED) {
+		int flags = 0;
+		void *i_flags_inout = (void *)(&flags);
+		_foreach_around(arr, x, y, i_flags_inout, _flagged_count);
+		if (flags == cd->_nearby)
+			_foreach_around(arr, x, y, b_bomb_hit_inout, _reveal_recur);
+	}
+	return bomb_hit;
+}
+
+static void
+_reveal_recur(struct CellArr *arr, int x, int y, void *b_bomb_out)
 {
 	struct CellData *cd = cell_at(arr, x, y);
 	if (cd->state == CELL_STATE_UNTOUCHED) {
 		cd->state = CELL_STATE_REVEALED;
 		const bool bomb = cd->_bomb;
 		*(bool *)(b_bomb_out) = bomb;
+		if (bomb)
+			cd->hovered = true;
 		if (cd->_nearby == 0 && !bomb)
-			_foreach_around(arr, x, y, b_bomb_out, cell_reveal_recur);
+			_foreach_around(arr, x, y, b_bomb_out, _reveal_recur);
 	}
 }
 
@@ -62,7 +94,7 @@ cell_setup(struct CellArr *arr_out, int w, int h)
 }
 
 void
-cell_destroy (struct CellArr *arr_out)
+cell_destroy(struct CellArr *arr_out)
 {
 	UTIL_ASSERT(arr_out != NULL);
 	free(arr_out->data);
@@ -99,6 +131,7 @@ static void
 _nearby_increment(struct CellArr *arr, int x, int y, void *_unused)
 {
 	(void)_unused;
-	++(cell_at(arr, x, y)->_nearby);
+	struct CellData *cd = cell_at(arr, x, y);
+	++(cd->_nearby);
 }
 

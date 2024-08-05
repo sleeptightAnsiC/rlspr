@@ -20,7 +20,7 @@ OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
 EXE = $(BINDIR)/rlspr
 
 # CFLAGS = @./$(RCPDIR)/flags_cc.txt
-# CFLAGS = @./$(RCPDIR)/flags_gcc.txt
+CFLAGS = @./$(RCPDIR)/flags_gcc.txt
 # CFLAGS = @./$(RCPDIR)/flags_clang.txt
 # CFLAGS = @./$(RCPDIR)/flags_tcc.txt
 

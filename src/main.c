@@ -25,22 +25,19 @@ static const int width = 9;
 static const int height = 9;
 static const int bombs = 10;
 static const int border = 1;
-static const bool interactive_cursor = true;
-static const bool interactive_cell = true;
 static const bool safe_first_try = true;
 
 
 int
 main(void)
 {
-	// game/draw state persistent between loop cycles
 	struct CellArr arr = { .data = NULL };
 	// TODO: would be nice to set it based on screen DPI
 	int scale = 50;
 	bool finished = false;
 	bool started = true;
 
-	{  // initialize window
+	{
 		const int win_w = (width + (border * 2)) * scale;
 		const int win_h = (height + (border * 2)) * scale;
 		SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
@@ -48,14 +45,12 @@ main(void)
 		UTIL_ASSERT(IsWindowReady());
 	}
 
-	// main game/draw loop
 	while (!WindowShouldClose()) {
 
 		int hovered_x = -1;
 		int hovered_y = -1;
 		struct CellData *hovered_cell = NULL;
 
-		// initialize cells array
 		if (started) {
 			cell_setup(&arr, width, height);
 			finished = false;
@@ -71,7 +66,6 @@ main(void)
 			}
 		}
 
-		// initialize frame
 		BeginDrawing();
 		ClearBackground(GRAY);
 
@@ -88,7 +82,6 @@ main(void)
 			}
 		}
 
-		// draw cell contents
 		// TODO:
 		//    this huge block should be the very first thing abstracted away
 		//    there should be a separated translation unit for it (maybe called "draw")
@@ -145,7 +138,7 @@ main(void)
 				continue;
 			default:
 				UTIL_UNREACHABLE();
-			} //ends switch (cd->state)
+			} //end switch (cd->state)
 		// FIXME: HAHAHA, turn this label into the function already...
 		label_draw_bomb: {
 			const int bomb_x = scale * (x + border) + scale_half;
@@ -153,10 +146,9 @@ main(void)
 			const float bomb_radius = (float)(scale_half) * 0.8f;
 			DrawCircle(bomb_x, bomb_y, bomb_radius, DARKPURPLE);
 			continue;
-		} // label_draw_bomb
+		} //end label_draw_bomb
 		}
 
-		// draw cell borders
 		for (int i = 0; i <= height + 1; ++i) {
 			const int pos_x_start = border * scale;
 			const int pos_x_end = width * scale + pos_x_start;
@@ -170,26 +162,8 @@ main(void)
 			DrawLine(pos_x, pos_y_start, pos_x, pos_y_end, DARKGRAY);
 		}
 
-		// highlight border around currently hovered cell
-		if (interactive_cell && hovered_cell != NULL) {
-			const int pos_x = (hovered_x + border) * scale;
-			const int pos_y = (hovered_y + border) * scale;
-			DrawRectangleLines(pos_x, pos_y, scale, scale, BLACK);
-		}
-
-		// adjust cursor visuals
-		if (interactive_cursor) {
-			if (hovered_cell != NULL && !finished) {
-				const bool revealed = hovered_cell->state == CELL_STATE_REVEALED;
-				const int cursor = revealed ? MOUSE_CURSOR_DEFAULT : MOUSE_CURSOR_POINTING_HAND;
-				SetMouseCursor(cursor);
-			} else {
-				SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-			}
-		}
-
-		// react to LMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !finished) {
+
 			while (safe_first_try && started && hovered_cell->_nearby != 0) {
 				cell_setup(&arr, width, height);
 				for (int i = 0; i < bombs;) {
@@ -202,13 +176,11 @@ main(void)
 					++i;
 				}
 			}
-			// HACK: this may backfire if I ever start messing with 'finished'
-			void *b_bomb_hit = (void*)(&finished);
-			cell_reveal_recur(&arr, hovered_x, hovered_y, b_bomb_hit);
 			started = false;
+
+			finished = cell_reveal(&arr, hovered_x, hovered_y);
 		}
 
-		// react to RMB click
 		if (hovered_cell != NULL && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && !finished) {
 			const enum CellState hcs = hovered_cell->state;
 			switch (hcs)
@@ -229,20 +201,12 @@ main(void)
 			}
 		}
 
-		{  // zoom-in/out based on mouse-scroll movement (visible in next frame)
-			// TODO: zooming should follow the cursor position
-			// TODO: add ability to scroll/pad the area (by cholding scroll-wheel / mouse3)
-			const float mouseWheelMove = GetMouseWheelMove();
-			scale += (int)mouseWheelMove;
-		}
-
 		// HACK: do not remove hover state from cell that lost the game
 		// because this was a bomb that caused a loss,
 		// and we gonna use this information to draw unique RED background
 		if (hovered_cell != NULL && !finished)
 			hovered_cell->hovered = false;
 
-		// trigger game restart
 		if (IsKeyPressed(KEY_R))
 			started = true;
 
