@@ -5,53 +5,70 @@
 #include "./util.h"
 
 
-static void _foreach_around(struct CellArr *arr, int x, int y, void *data, void(func)(struct CellArr *arr, int x, int y, void *data));
-static void _nearby_increment(struct CellArr *arr, int x, int y, void *_unused);
-static void _reveal_recur(struct CellArr *arr, int x, int y, void *b_bomb_out);
-static void _flagged_count(struct CellArr *arr, int x, int y, void *i_count_out);
+// https://www.reddit.com/r/cprogramming/comments/1ekzyzu/comment/lgsv11a/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+#define _FOREACH_AROUND(ARR, X, Y, IT_X, IT_Y)             \
+        for (                                              \
+                int IT_X = UTIL_MAX(0, (X - 1));           \
+                IT_X <= UTIL_MIN(((ARR)->w - 1), (X + 1)); \
+                ++(IT_X)                                   \
+        ) for (                                            \
+                int IT_Y = UTIL_MAX(0, (Y - 1));           \
+                IT_Y <= UTIL_MIN(((ARR)->h - 1), (Y + 1)); \
+                ++(IT_Y)                                   \
+        ) if (X != IT_X || Y != IT_Y)                      \
 
-static void
-_flagged_count(struct CellArr *arr, int x, int y, void *i_count_out)
-{
-	const struct CellData *cd = cell_at(arr, x, y);
-	if (cd->state == CELL_STATE_FLAGGED) {
-		int *count = (int *)(i_count_out);
-		++(*count);
-	}
-}
+
+static bool _reveal_recur(struct CellArr *arr, int x, int y);
+
 
 bool
 cell_reveal(struct CellArr *arr, int x, int y)
 {
 	struct CellData *cd = cell_at(arr, x, y);
 	bool bomb_hit = false;
-	void *b_bomb_hit_inout = (void *)(&bomb_hit);
 	if (cd->state == CELL_STATE_UNTOUCHED) {
-		_reveal_recur(arr, x, y, b_bomb_hit_inout);
+		bomb_hit = _reveal_recur(arr, x, y);
 	} else if (cd->state == CELL_STATE_REVEALED) {
 		int flags = 0;
-		void *i_flags_inout = (void *)(&flags);
-		_foreach_around(arr, x, y, i_flags_inout, _flagged_count);
-		if (flags == cd->_nearby)
-			_foreach_around(arr, x, y, b_bomb_hit_inout, _reveal_recur);
+		_FOREACH_AROUND(arr, x, y, it_x, it_y)
+		{
+			const struct CellData *it_cd = cell_at(arr, it_x, it_y);
+			if (it_cd->state == CELL_STATE_FLAGGED)
+				++flags;
+		}
+		if (flags == cd->_nearby) {
+			_FOREACH_AROUND(arr, x, y, it_x, it_y)
+			{
+				const bool it_bombed = _reveal_recur(arr, it_x, it_y);
+				if (it_bombed)
+					bomb_hit = true;
+			}
+		}
 	}
 	return bomb_hit;
 }
 
-static void
-_reveal_recur(struct CellArr *arr, int x, int y, void *b_bomb_out)
+static bool
+_reveal_recur(struct CellArr *arr, int x, int y)
 {
 	struct CellData *cd = cell_at(arr, x, y);
 	if (cd->state == CELL_STATE_UNTOUCHED) {
 		cd->state = CELL_STATE_REVEALED;
-		const bool bomb = cd->_bomb;
-		if (bomb) {
+		const bool bombed = cd->_bomb;
+		if (bombed) {
 			cd->hovered = true;
-			*(bool *)(b_bomb_out) = bomb;
+			return true;
 		}
-		if (cd->_nearby == 0 && !bomb)
-			_foreach_around(arr, x, y, b_bomb_out, _reveal_recur);
+		if (cd->_nearby == 0 && !bombed) {
+			_FOREACH_AROUND(arr, x, y, it_x, it_y)
+			{
+				const bool it_bombed = _reveal_recur(arr, it_x, it_y);
+				if (it_bombed)
+					return true;
+			}
+		}
 	}
+	return false;
 }
 
 void
@@ -61,7 +78,11 @@ cell_bomb_plant(struct CellArr *arr, int x, int y)
 	UTIL_ASSERT(!cd->_bomb);
 	cd->_bomb = true;
 	++(cd->_nearby);
-	_foreach_around(arr, x, y, NULL, _nearby_increment);
+	_FOREACH_AROUND(arr, x, y, it_x, it_y)
+	{
+		struct CellData *it_cd = cell_at(arr, it_x, it_y);
+		++(it_cd->_nearby);
+	}
 }
 
 struct CellData *
@@ -100,39 +121,5 @@ cell_destroy(struct CellArr *arr_out)
 	UTIL_ASSERT(arr_out != NULL);
 	free(arr_out->data);
 	arr_out->data = NULL;
-}
-
-
-static void
-_foreach_around(struct CellArr *arr, int x, int y, void *data, void(func)(struct CellArr *arr, int x, int y, void *data))
-{
-	const bool xg = x >= 0 + 1;
-	const bool xl = x < arr->w - 1;
-	const bool yg = y >= 0 + 1;
-	const bool yl = y < arr->h - 1;
-	if (xg && yg)
-		func(arr, x-1, y-1, data);
-	if (xg)
-		func(arr, x-1, y, data);
-	if (xg && yl)
-		func(arr, x-1, y+1, data);
-	if (xl && yg)
-		func(arr, x+1, y-1, data);
-	if (xl)
-		func(arr, x+1, y, data);
-	if (xl && yl)
-		func(arr, x+1, y+1, data);
-	if (yg)
-		func(arr, x, y-1, data);
-	if (yl)
-		func(arr, x, y+1, data);
-}
-
-static void
-_nearby_increment(struct CellArr *arr, int x, int y, void *_unused)
-{
-	(void)_unused;
-	struct CellData *cd = cell_at(arr, x, y);
-	++(cd->_nearby);
 }
 

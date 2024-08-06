@@ -20,6 +20,10 @@
 #define _UTIL_STATIC_ASSERT_1(COND,L) _UTIL_STATIC_ASSERT_2(COND,L)
 #define UTIL_STATIC_ASSERT(COND) _UTIL_STATIC_ASSERT_1(COND,__LINE__)
 
+#define UTIL_MIN(A, B) (((A) < (B)) ? (A) : (B))
+
+#define UTIL_MAX(A, B) (((A) > (B)) ? (A) : (B))
+
 
 #endif //UTIL_H
 
