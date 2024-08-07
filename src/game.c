@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "./game.h"
 #include "./raylib.h"
+#include "cell.h"
 
 
 struct GameState
@@ -48,7 +49,7 @@ game_hover(struct GameState *gs)
 		gs->hovered_y = (mouse_y - o.border * gs->scale) / gs->scale;
 
 	if (gs->hovered_x != -1 && gs->hovered_y != -1) {
-		gs->hovered_cell = cell_at(&gs->arr, gs->hovered_x, gs->hovered_y);
+		CELL_GET(&gs->arr, gs->hovered_x, gs->hovered_y, gs->hovered_cell);
 		gs->hovered_cell->hovered = true;
 	} else {
 		gs->hovered_cell = NULL;
@@ -64,7 +65,8 @@ game_plant(struct GameState *gs)
 	for (int i = 0; i < gs->opts.bombs;) {
 		const int x = GetRandomValue(0, gs->opts.width - 1);
 		const int y = GetRandomValue(0, gs->opts.height - 1);
-		struct CellData *cd = cell_at(arr, x, y);
+		struct CellData *cd;
+		CELL_GET(arr, x, y, cd);
 		if (cd->_bomb)
 			continue;
 		cell_plant(arr, x, y);
@@ -80,7 +82,8 @@ game_hovered_toggle(struct GameState *gs)
 		&& gs->hovered_cell != NULL
 		&& gs->hovered_cell->state != CELL_STATE_REVEALED
 	) {
-		struct CellData *cd = cell_at(&gs->arr, gs->hovered_x, gs->hovered_y);
+		struct CellData *cd;
+		CELL_GET(&gs->arr, gs->hovered_x, gs->hovered_y, cd);
 		switch (cd->state)
 		{
 		case CELL_STATE_UNTOUCHED:
