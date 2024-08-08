@@ -27,13 +27,15 @@ game_init(void)
 		.hovered_y = -1,
 		.hovered_pushed = false,
 	};
+	game_replant(&out);
 	return out;
 }
 
 void
 game_rehover(struct GameState *gs)
 {
-	UTIL_ASSERT(IsWindowReady());
+	if (gs->finished)
+		return;
 
 	if (gs->hovered_cell != NULL) {
 		gs->hovered_cell->hovered = false;
@@ -62,7 +64,6 @@ game_rehover(struct GameState *gs)
 void
 game_replant(struct GameState *gs)
 {
-	UTIL_ASSERT(IsWindowReady());
 	struct CellArr *arr = &gs->arr;
 	cell_setup(arr, gs->opts.width, gs->opts.height);
 	for (int i = 0; i < gs->opts.bombs;) {
@@ -138,6 +139,7 @@ game_restart(struct GameState *gs)
 {
 	gs->started = true;
 	gs->finished = false;
+	game_replant(gs);
 }
 
 

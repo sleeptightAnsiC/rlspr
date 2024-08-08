@@ -25,10 +25,7 @@ main(void)
 
 	while (!WindowShouldClose())
 	{
-		if (gs.started)
-			game_replant(&gs);
-		if (!gs.finished)
-			game_rehover(&gs);
+		game_rehover(&gs);
 
 #		define X(FUNC, KEY, EVENT) \
 		if (FUNC(KEY)) EVENT(&gs)  \
