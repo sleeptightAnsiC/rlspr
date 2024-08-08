@@ -1,3 +1,3 @@
 
 // re-include for easier building and LSP support
-#include "../lib/raylib/src/raylib.h"
+#include "../raylib/src/raylib.h"

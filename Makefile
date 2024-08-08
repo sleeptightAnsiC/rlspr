@@ -13,7 +13,7 @@ RCPDIR = ./rcp
 SRCDIR = ./src
 TMPDIR = ./tmp/$(CC)
 BINDIR = ./bin/$(CC)
-RAYDIR = ./lib/raylib/src
+RAYDIR = ./raylib/src
 
 SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))

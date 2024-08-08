@@ -49,11 +49,7 @@ draw_cells(const struct GameState *gs)
 		const int rect_x = (gs->opts.border + x) * gs->scale;
 		const int rect_y = (gs->opts.border + y) * gs->scale;
 
-		if (
-			true
-			&& cd == gs->hovered_cell
-			&& gs->hovered_pushed
-		) {
+		if (cd == gs->hovered_cell && gs->hovered_pushed) {
 			DrawRectangle(rect_x, rect_y, gs->scale, gs->scale, DARKGRAY);
 			continue;
 		}
@@ -90,9 +86,8 @@ draw_cells(const struct GameState *gs)
 
 		} case CELL_STATE_QUESTIONED: {
 		} case CELL_STATE_FLAGGED: {
-			const Color color = (gs->finished && !cd->_bomb) ? (RED) : (ORANGE);
 			const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
-			DrawText(glyph, char_x, char_y, gs->scale, color);
+			DrawText(glyph, char_x, char_y, gs->scale, BLACK);
 			continue;
 		} case CELL_STATE_UNTOUCHED: {
 			if (gs->finished && cd-> _bomb)

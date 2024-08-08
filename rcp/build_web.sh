@@ -7,7 +7,7 @@ set -euo pipefail
 
 SRCDIR="src"
 RCPDIR="rcp"
-RAYDIR="lib/raylib/src"
+RAYDIR="raylib/src"
 
 TMPDIR="tmp/emcc"
 BINDIR="bin/emcc"
