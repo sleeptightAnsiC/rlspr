@@ -25,6 +25,7 @@ game_init(void)
 		.hovered_cell = NULL,
 		.hovered_x = -1,
 		.hovered_y = -1,
+		.hovered_pushed = false,
 	};
 	return out;
 }
@@ -34,8 +35,10 @@ game_hover(struct GameState *gs)
 {
 	UTIL_ASSERT(IsWindowReady());
 
-	if (gs->hovered_cell != NULL)
+	if (gs->hovered_cell != NULL) {
 		gs->hovered_cell->hovered = false;
+		gs->hovered_pushed = false;
+	}
 	gs->hovered_x = -1;
 	gs->hovered_y = -1;
 
@@ -116,4 +119,24 @@ game_hovered_reveal(struct GameState *gs)
 		gs->finished = cell_reveal(&gs->arr, gs->hovered_x, gs->hovered_y);
 	}
 }
+
+void
+game_hovered_push(struct GameState *gs)
+{
+	if (
+		true
+		&& !gs->finished
+		&& gs->hovered_cell != NULL
+		&& gs->hovered_cell->state == CELL_STATE_UNTOUCHED
+	) {
+		gs->hovered_pushed = true;
+	}
+}
+
+void
+game_restart(struct GameState *gs)
+{
+	gs->started = true;
+}
+
 

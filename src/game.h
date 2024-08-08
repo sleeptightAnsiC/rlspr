@@ -21,13 +21,16 @@ struct GameState {
 	int scale;
 	bool finished;
 	bool started;
+	bool hovered_pushed;
 };
 
 struct GameState game_init(void);
 void game_plant(struct GameState *gs);
+void game_restart(struct GameState *gs);
 void game_hover(struct GameState *gs);
 void game_hovered_toggle(struct GameState *gs);
 void game_hovered_reveal(struct GameState *gs);
+void game_hovered_push(struct GameState *gs);
 
 
 #endif

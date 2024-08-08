@@ -51,11 +51,8 @@ draw_cells(const struct GameState *gs)
 
 		if (
 			true
-			&& !gs->finished
 			&& cd == gs->hovered_cell
-			&& cd->state == CELL_STATE_UNTOUCHED
-			// FIXME: this really shouldn't be here
-			&& IsMouseButtonDown(MOUSE_BUTTON_LEFT)
+			&& gs->hovered_pushed
 		) {
 			DrawRectangle(rect_x, rect_y, gs->scale, gs->scale, DARKGRAY);
 			continue;

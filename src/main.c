@@ -23,34 +23,32 @@ main(void)
 		UTIL_ASSERT(IsWindowReady());
 	}
 
-	while (!WindowShouldClose()) {
-
-		BeginDrawing();
-		ClearBackground(GRAY);
-
+	while (!WindowShouldClose())
+	{
 		if (gs.started)
 			game_plant(&gs);
-
 		if (!gs.finished)
 			game_hover(&gs);
 
-		draw_cells(&gs);
-		draw_borders(&gs);
-
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+			game_hovered_push(&gs);
 		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
 			game_hovered_reveal(&gs);
-
 		if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT))
 			game_hovered_toggle(&gs);
-
 		if (IsKeyPressed(KEY_R))
-			gs.started = true;
+			game_restart(&gs);
 
+		BeginDrawing();
+		ClearBackground(GRAY);
+		draw_cells(&gs);
+		draw_borders(&gs);
 		EndDrawing();
 	}
 
+	// FIXME: since game initializes this resource,
+	// the game should be the one destroying it, not cell
 	cell_destroy(&gs.arr);
-
 	CloseWindow();
 	return EXIT_SUCCESS;
 }
