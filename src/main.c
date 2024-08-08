@@ -30,14 +30,11 @@ main(void)
 		if (!gs.finished)
 			game_hover(&gs);
 
-		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-			game_hovered_push(&gs);
-		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-			game_hovered_reveal(&gs);
-		if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT))
-			game_hovered_toggle(&gs);
-		if (IsKeyPressed(KEY_R))
-			game_restart(&gs);
+#		define X(FUNC, KEY, EVENT) \
+		if (FUNC(KEY)) EVENT(&gs)  \
+		;                           
+		X_GAME_BINDS
+#		undef X
 
 		BeginDrawing();
 		ClearBackground(GRAY);
