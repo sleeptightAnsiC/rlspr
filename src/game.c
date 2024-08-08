@@ -142,4 +142,11 @@ game_restart(struct GameState *gs)
 	game_replant(gs);
 }
 
+void
+game_deinit(struct GameState *gs)
+{
+	free(gs->arr.data);
+	gs->arr.data = NULL;
+}
+
 

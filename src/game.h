@@ -37,6 +37,7 @@ struct GameState {
 
 
 struct GameState game_init(void);
+void game_deinit(struct GameState *gs);
 void game_replant(struct GameState *gs);
 void game_restart(struct GameState *gs);
 void game_rehover(struct GameState *gs);

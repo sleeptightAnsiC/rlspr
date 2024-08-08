@@ -41,11 +41,10 @@ do {                                                         \
 } while(0)                                                   \
 
 
-bool cell_reveal(struct CellArr *arr, int x, int y);
-void cell_toggle(struct CellArr *arr, int x, int y);
-void cell_plant(struct CellArr *arr, int x, int y);
 void cell_setup(struct CellArr *arr_out, int w, int h);
-void cell_destroy(struct CellArr *arr_out);
+void cell_plant(struct CellArr *arr, int x, int y);
+void cell_toggle(struct CellArr *arr, int x, int y);
+bool cell_reveal(struct CellArr *arr, int x, int y);
 
 
 #endif

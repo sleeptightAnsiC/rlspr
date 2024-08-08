@@ -81,14 +81,6 @@ cell_setup(struct CellArr *arr_out, int w, int h)
 	arr_out->height = h;
 }
 
-void
-cell_destroy(struct CellArr *arr_out)
-{
-	UTIL_ASSERT(arr_out != NULL);
-	free(arr_out->data);
-	arr_out->data = NULL;
-}
-
 static bool
 _reveal_recur(struct CellArr *arr, int x, int y)
 {

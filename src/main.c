@@ -40,9 +40,7 @@ main(void)
 		EndDrawing();
 	}
 
-	// FIXME: since game initializes this resource,
-	// the game should be the one destroying it, not cell
-	cell_destroy(&gs.arr);
+	game_deinit(&gs);
 	CloseWindow();
 	return EXIT_SUCCESS;
 }
