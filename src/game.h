@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "./cell.h"
 
+
 #define X_GAME_BINDS                                                      \
         X(IsMouseButtonDown, MOUSE_BUTTON_LEFT, game_hovered_push)        \
         X(IsMouseButtonReleased, MOUSE_BUTTON_LEFT, game_hovered_reveal)  \
@@ -36,9 +37,9 @@ struct GameState {
 
 
 struct GameState game_init(void);
-void game_plant(struct GameState *gs);
+void game_replant(struct GameState *gs);
 void game_restart(struct GameState *gs);
-void game_hover(struct GameState *gs);
+void game_rehover(struct GameState *gs);
 void game_hovered_toggle(struct GameState *gs);
 void game_hovered_reveal(struct GameState *gs);
 void game_hovered_push(struct GameState *gs);

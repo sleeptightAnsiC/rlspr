@@ -31,7 +31,7 @@ game_init(void)
 }
 
 void
-game_hover(struct GameState *gs)
+game_rehover(struct GameState *gs)
 {
 	UTIL_ASSERT(IsWindowReady());
 
@@ -60,7 +60,7 @@ game_hover(struct GameState *gs)
 }
 
 void
-game_plant(struct GameState *gs)
+game_replant(struct GameState *gs)
 {
 	UTIL_ASSERT(IsWindowReady());
 	struct CellArr *arr = &gs->arr;
@@ -114,7 +114,7 @@ game_hovered_reveal(struct GameState *gs)
 		&& (gs->hovered_cell->state == CELL_STATE_REVEALED || gs->hovered_cell->state == CELL_STATE_UNTOUCHED)
 	) {
 		while (gs->opts.safe_first_try && gs->started && gs->hovered_cell->_nearby != 0)
-			game_plant(gs);
+			game_replant(gs);
 		gs->started = false;
 		gs->finished = cell_reveal(&gs->arr, gs->hovered_x, gs->hovered_y);
 	}
@@ -137,6 +137,7 @@ void
 game_restart(struct GameState *gs)
 {
 	gs->started = true;
+	gs->finished = false;
 }
 
 
