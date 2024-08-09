@@ -16,7 +16,7 @@ main(void)
 	struct GameState gs = game_init();
 
 	{
-		SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE + FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
+		SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE);
 		const int win_w = (gs.opts.width + (gs.opts.border * 2)) * gs.scale;
 		const int win_h = (gs.opts.height + (gs.opts.border * 2)) * gs.scale;
 		InitWindow(win_w, win_h, "rlspr");
