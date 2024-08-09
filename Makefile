@@ -68,8 +68,8 @@ $(TMPDIR)/raylib.txt: $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
 	cd $(RAYDIR) && git restore .
 	echo "This file indicates that raylib has been built." > $(TMPDIR)/raylib.txt
 
-$(RAYDIR):
-	@echo "It appears that $(RAYDIR) is missing!!!"
+$(RAYDIR) ./raygui/src/raygui.h:
+	@echo "It appears that $@ is missing!!!"
 	@echo "Have you cloned this project recursively?"
 	@echo "Attempting to recover by updating Raylib's submodule..."
 	git submodule update --init
@@ -80,9 +80,13 @@ $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -MM $^ >> $@ || (rm $@ && exit 1)
 	echo "	\$$(CC) \$$(CFLAGS) -c \$$< -o \$$@" >> $@
 
+LFLAGS = -lm
+ifeq ($(shell uname),Windows_NT)
+	LFLAGS += -lgdi32 -lwinmm
+endif
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
 	echo "\$$(EXE): $(OBJS)" > $@
-	echo "	\$$(CC) \$$(CFLAGS) $(TMPDIR)/raylib_*.o -lm \$$^ -o \$$@" >> $@
+	echo "	\$$(CC) \$$(CFLAGS) $(TMPDIR)/raylib_*.o $(LFLAGS) \$$^ -o \$$@" >> $@
 	\
 	for file in $^; do \
 		echo "" >> $@; \
