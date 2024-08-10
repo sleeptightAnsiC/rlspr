@@ -73,7 +73,7 @@ ifeq ($(OS),Windows_NT)
 	LDFLAGS += -lgdi32 -lwinmm
 endif
 ifeq ($(shell uname),Darwin)
-	LDLIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
+	LDFLAGS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
 endif
 
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
