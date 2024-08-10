@@ -1,8 +1,4 @@
 
-### variables:
-
-PLATFORM=PLATFORM_DESKTOP
-
 # CC = cc
 # CC = c99
 CC = gcc
@@ -28,8 +24,6 @@ SANDBOX = $(shell cat $(RCPDIR)/sandbox_gdb.txt)
 # SANDBOX = $(shell cat $(RCPDIR)/sandbox_valgrind.txt)
 
 
-### main targets:
-
 .PHONY: run
 run: build
 	$(SANDBOX) "$(EXE)"
@@ -45,33 +39,27 @@ clean:
 	cd $(RAYDIR) && git restore .
 
 
-### generic sub-targets (called by main targets):
-
 .PHONY: always
 always: ;
 
 $(EXE): $(TMPDIR)/Makefile.mk $(TMPDIR)/raylib.txt always
 	$(MAKE) CC='$(CC)' CFLAGS="$(CFLAGS)" EXE='$(EXE)' --file='$<'
 
-# FIXME: code repetition while cleaning Raylib
-.PRECIOUS: $(TMPDIR)/raylib%
+.PRECIOUS: $(TMPDIR)/raylib_%
 $(TMPDIR)/raylib.txt: $(shell ls -rd $(RAYDIR)/** $(RAYDIR)/**/**)
 	$(MAKE) clean -C $(RAYDIR)
-	cd $(RAYDIR) && git restore .
-	env -uCFLAGS $(MAKE) CC=$(CC) CUSTOM_CFLAGS='-std=c99 -O0 -g' PLATFORM=$(PLATFORM) -j -C $(RAYDIR)
+	# HACK: AR is set to 'echo' to prevent it from creating archive
+	env -u CFLAGS $(MAKE) CC=$(CC) -j -C $(RAYDIR) AR='echo'
 	\
 	for ro in $$(ls $(RAYDIR)/*.o); do \
 		cp -f $$ro $(TMPDIR)/raylib_$$(basename $$ro); \
 	done \
 	;
-	$(MAKE) clean -C $(RAYDIR)
-	cd $(RAYDIR) && git restore .
 	echo "This file indicates that raylib has been built." > $(TMPDIR)/raylib.txt
 
 $(RAYDIR) ./raygui/src/raygui.h:
-	@echo "It appears that $@ is missing!!!"
-	@echo "Have you cloned this project recursively?"
-	@echo "Attempting to recover by updating Raylib's submodule..."
+	@echo "$@ is missing!!!"
+	@echo "Attempting to recover by updating git submodules..."
 	git submodule update --init
 
 .PRECIOUS: $(TMPDIR)/%.mk
@@ -80,13 +68,13 @@ $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -MM $^ >> $@ || (rm $@ && exit 1)
 	echo "	\$$(CC) \$$(CFLAGS) -c \$$< -o \$$@" >> $@
 
-LFLAGS = -lm
+LDFLAGS = -lm
 ifeq ($(shell uname),Windows_NT)
-	LFLAGS += -lgdi32 -lwinmm
+	LDFLAGS += -lgdi32 -lwinmm
 endif
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
 	echo "\$$(EXE): $(OBJS)" > $@
-	echo "	\$$(CC) \$$(CFLAGS) $(TMPDIR)/raylib_*.o $(LFLAGS) \$$^ -o \$$@" >> $@
+	echo "	\$$(CC) \$$(CFLAGS) $(TMPDIR)/raylib_*.o $(LDFLAGS) \$$^ -o \$$@" >> $@
 	\
 	for file in $^; do \
 		echo "" >> $@; \
