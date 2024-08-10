@@ -1,7 +1,7 @@
 
-# CC = cc
+CC = cc
 # CC = c99
-CC = gcc
+# CC = gcc
 # CC = clang
 # CC = tcc
 
@@ -15,12 +15,12 @@ SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
 EXE = $(BINDIR)/rlspr
 
-# CFLAGS = @./$(RCPDIR)/flags_cc.txt
-CFLAGS = @./$(RCPDIR)/flags_gcc.txt
+CFLAGS = @./$(RCPDIR)/flags_cc.txt
+# CFLAGS = @./$(RCPDIR)/flags_gcc.txt
 # CFLAGS = @./$(RCPDIR)/flags_clang.txt
 # CFLAGS = @./$(RCPDIR)/flags_tcc.txt
 
-SANDBOX = $(shell cat $(RCPDIR)/sandbox_gdb.txt)
+# SANDBOX = $(shell cat $(RCPDIR)/sandbox_gdb.txt)
 # SANDBOX = $(shell cat $(RCPDIR)/sandbox_valgrind.txt)
 
 
@@ -69,9 +69,13 @@ $(TMPDIR)/%.mk: $(SRCDIR)/%.c
 	echo "	\$$(CC) \$$(CFLAGS) -c \$$< -o \$$@" >> $@
 
 LDFLAGS = -lm
-ifeq ($(shell uname),Windows_NT)
+ifeq ($(OS),Windows_NT)
 	LDFLAGS += -lgdi32 -lwinmm
 endif
+ifeq ($(shell uname),Darwin)
+	LDLIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
+endif
+
 $(TMPDIR)/Makefile.mk: $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.mk,$(SRCS))
 	echo "\$$(EXE): $(OBJS)" > $@
 	echo "	\$$(CC) \$$(CFLAGS) $(TMPDIR)/raylib_*.o $(LDFLAGS) \$$^ -o \$$@" >> $@
