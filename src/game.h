@@ -15,6 +15,10 @@
         X(IsKeyPressed, KEY_F2, game_restart)                             \
 
 
+#define GAME_OFFSET_Y(GS_PTR)                           \
+	((GS_PTR)->scale * ((GS_PTR)->opts.border + 2)) \
+
+
 struct GameOptions {
 	int width;
 	int height;

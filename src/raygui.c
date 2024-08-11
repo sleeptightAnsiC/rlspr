@@ -16,7 +16,7 @@
 #pragma GCC diagnostic ignored "-Wcast-qual"
 
 #define RAYGUI_IMPLEMENTATION
-#include "./raygui.h"
+#include "raygui.h"
 
 #pragma GCC diagnostic pop
 

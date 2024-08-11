@@ -1,8 +1,8 @@
 
 #include <stdlib.h>
+#include "raylib.h"
 #include "./game.h"
-#include "./raylib.h"
-#include "cell.h"
+#include "./cell.h"
 
 
 struct GameState
@@ -48,10 +48,11 @@ game_rehover(struct GameState *gs)
 	const int mouse_y = GetMouseY();
 	const struct GameOptions o = gs->opts;
 
-	if (mouse_x < (o.border + o.width) * gs->scale && mouse_x >= o.border * gs->scale)
+	const int offset_y = GAME_OFFSET_Y(gs);
+	if ((mouse_x < (o.border + o.width) * gs->scale) && (mouse_x >= o.border * gs->scale))
 		gs->hovered_x = (mouse_x - o.border * gs->scale) / gs->scale;
-	if (mouse_y < (o.border + o.height) * gs->scale && mouse_y >= o.border * gs->scale)
-		gs->hovered_y = (mouse_y - o.border * gs->scale) / gs->scale;
+	if ((mouse_y < (o.border + o.height) * gs->scale + offset_y) && (mouse_y >= o.border * gs->scale + offset_y))
+		gs->hovered_y = (mouse_y - o.border * gs->scale - offset_y) / gs->scale;
 
 	if (gs->hovered_x != -1 && gs->hovered_y != -1) {
 		CELL_GET(&gs->arr, gs->hovered_x, gs->hovered_y, gs->hovered_cell);
@@ -148,5 +149,4 @@ game_deinit(struct GameState *gs)
 	free(gs->arr.data);
 	gs->arr.data = NULL;
 }
-
 

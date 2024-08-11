@@ -29,16 +29,16 @@ struct CellArr {
 };
 
 
-#define CELL_GET(ARR_PTR_OUT, X, Y, CELL_PTR_OUT)            \
-do {                                                         \
-        UTIL_ASSERT((ARR_PTR_OUT) != 0);                     \
-        UTIL_ASSERT(X >= 0);                                 \
-        UTIL_ASSERT(Y >= 0);                                 \
-        UTIL_ASSERT(X < (ARR_PTR_OUT)->width);               \
-        UTIL_ASSERT(Y < (ARR_PTR_OUT)->height);              \
-        const int _OUT_idx = (Y * (ARR_PTR_OUT)->width) + X; \
-        CELL_PTR_OUT =  (ARR_PTR_OUT)->data + _OUT_idx;      \
-} while(0)                                                   \
+#define CELL_GET(ARR_PTR_OUT, X, Y, CELL_PTR_OUT)        \
+do {                                                     \
+        UTIL_ASSERT((ARR_PTR_OUT) != 0);                 \
+        UTIL_ASSERT(X >= 0);                             \
+        UTIL_ASSERT(Y >= 0);                             \
+        UTIL_ASSERT(X < (ARR_PTR_OUT)->width);           \
+        UTIL_ASSERT(Y < (ARR_PTR_OUT)->height);          \
+        const int _idx = (Y * (ARR_PTR_OUT)->width) + X; \
+        CELL_PTR_OUT =  (ARR_PTR_OUT)->data + _idx;      \
+} while(0)                                               \
 
 
 void cell_setup(struct CellArr *arr_out, int w, int h);
