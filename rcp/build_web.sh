@@ -35,7 +35,7 @@ popd
 
 mv $RAYDIR/*.o $TMPDIR
 
-emcc $TMPDIR/*.o $SRCDIR/*.c --shell-file $RAYDIR/minshell.html -s USE_GLFW=3 -s ASYNCIFY -o $BINDIR/index.html
+emcc $TMPDIR/*.o $SRCDIR/*.c --shell-file $RAYDIR/minshell.html -s USE_GLFW=3 -s ASYNCIFY -o $BINDIR/index.html -sALLOW_MEMORY_GROWTH
 
 which zip > /dev/null || exit 1
 zip -u $PKGDIR/rlspr.zip $BINDIR/index*
