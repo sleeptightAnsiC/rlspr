@@ -130,9 +130,12 @@ game_hovered_reveal(struct GameState *gs)
 	) {
 		while (gs->opts.safe_first_try && gs->stage == GAME_STAGE_INITIALIZED && gs->hovered_cell->_nearby != 0)
 			game_replant(gs);
-		gs->stage = GAME_STAGE_STARTED;
-		const bool bombed = cell_reveal(&gs->arr, gs->hovered_x, gs->hovered_y);
-		if (bombed) {
+		if (gs->stage == GAME_STAGE_INITIALIZED) {
+			gs->stage = GAME_STAGE_STARTED;
+			gs->time_started = GetTime();
+		}
+		const bool blown = cell_reveal(&gs->arr, gs->hovered_x, gs->hovered_y);
+		if (blown) {
 			gs->stage = GAME_STAGE_LOST;
 			gs->time_ended = GetTime();
 		} else if (gs->remaining_bombs == 0 && gs->arr.untouched_count == 0) {
@@ -159,7 +162,6 @@ void
 game_restart(struct GameState *gs)
 {
 	gs->stage = GAME_STAGE_INITIALIZED;
-	gs->time_started = GetTime();
 	game_replant(gs);
 }
 
