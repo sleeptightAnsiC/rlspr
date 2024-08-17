@@ -20,9 +20,9 @@ game_init(void)
 		.opts = opts,
 		.arr = arr,
 		.scale = 50,
-		.finished = false,
-		.started = true,
+		.stage = GAME_STAGE_INITIALIZED,
 		.hovered_cell = NULL,
+		.remaining_bombs = opts.bombs,
 		.hovered_x = -1,
 		.hovered_y = -1,
 		.hovered_pushed = false,
@@ -34,7 +34,7 @@ game_init(void)
 void
 game_rehover(struct GameState *gs)
 {
-	if (gs->finished)
+	if (gs->stage == GAME_STAGE_WON || gs->stage == GAME_STAGE_LOST)
 		return;
 
 	if (gs->hovered_cell != NULL) {
@@ -67,6 +67,7 @@ game_replant(struct GameState *gs)
 {
 	struct CellArr *arr = &gs->arr;
 	cell_setup(arr, gs->opts.width, gs->opts.height);
+	// WARN: notice that 'i' increments only when bomb has been planted
 	for (int i = 0; i < gs->opts.bombs;) {
 		const int x = GetRandomValue(0, gs->opts.width - 1);
 		const int y = GetRandomValue(0, gs->opts.height - 1);
@@ -79,13 +80,14 @@ game_replant(struct GameState *gs)
 	}
 }
 
+// FIXME: part of this function probably should be moved to cell.c (cell_toggle)
 void
 game_hovered_toggle(struct GameState *gs)
 {
 	if ( true
-		&& !gs->finished
+		&& gs->stage != GAME_STAGE_WON
+		&& gs->stage != GAME_STAGE_LOST
 		&& gs->hovered_cell != NULL
-		&& gs->hovered_cell->state != CELL_STATE_REVEALED
 	) {
 		struct CellData *cd;
 		CELL_GET(&gs->arr, gs->hovered_x, gs->hovered_y, cd);
@@ -93,14 +95,24 @@ game_hovered_toggle(struct GameState *gs)
 		{
 		case CELL_STATE_UNTOUCHED:
 			cd->state = CELL_STATE_FLAGGED;
+			--(gs->remaining_bombs);
+			--(gs->arr.untouched_count);
+			if (gs->remaining_bombs == 0 && gs->arr.untouched_count == 0) {
+				gs->stage = GAME_STAGE_WON;
+				gs->time_ended = GetTime();
+			}
 			break;
 		case CELL_STATE_FLAGGED:
 			cd->state = CELL_STATE_QUESTIONED;
+			++(gs->remaining_bombs);
 			break;
 		case CELL_STATE_QUESTIONED:
 			cd->state = CELL_STATE_UNTOUCHED;
+			++(gs->arr.untouched_count);
 			break;
 		case CELL_STATE_REVEALED:
+			// do nothing if it's already revealed
+			break;
 		default:
 			UTIL_UNREACHABLE();
 		}
@@ -111,23 +123,31 @@ void
 game_hovered_reveal(struct GameState *gs)
 {
 	if ( true
-		&& !gs->finished
+		&& gs->stage != GAME_STAGE_WON
+		&& gs->stage != GAME_STAGE_LOST
 		&& gs->hovered_cell != NULL
 		&& (gs->hovered_cell->state == CELL_STATE_REVEALED || gs->hovered_cell->state == CELL_STATE_UNTOUCHED)
 	) {
-		while (gs->opts.safe_first_try && gs->started && gs->hovered_cell->_nearby != 0)
+		while (gs->opts.safe_first_try && gs->stage == GAME_STAGE_INITIALIZED && gs->hovered_cell->_nearby != 0)
 			game_replant(gs);
-		gs->started = false;
-		gs->finished = cell_reveal(&gs->arr, gs->hovered_x, gs->hovered_y);
+		gs->stage = GAME_STAGE_STARTED;
+		const bool bombed = cell_reveal(&gs->arr, gs->hovered_x, gs->hovered_y);
+		if (bombed) {
+			gs->stage = GAME_STAGE_LOST;
+			gs->time_ended = GetTime();
+		} else if (gs->remaining_bombs == 0 && gs->arr.untouched_count == 0) {
+			gs->stage = GAME_STAGE_WON;
+			gs->time_ended = GetTime();
+		}
 	}
 }
 
 void
 game_hovered_push(struct GameState *gs)
 {
-	if (
-		true
-		&& !gs->finished
+	if ( true
+		&& gs->stage != GAME_STAGE_WON
+		&& gs->stage != GAME_STAGE_LOST
 		&& gs->hovered_cell != NULL
 		&& gs->hovered_cell->state == CELL_STATE_UNTOUCHED
 	) {
@@ -138,8 +158,8 @@ game_hovered_push(struct GameState *gs)
 void
 game_restart(struct GameState *gs)
 {
-	gs->started = true;
-	gs->finished = false;
+	gs->stage = GAME_STAGE_INITIALIZED;
+	gs->time_started = GetTime();
 	game_replant(gs);
 }
 

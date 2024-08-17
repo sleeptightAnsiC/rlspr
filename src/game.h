@@ -16,8 +16,15 @@
 
 
 #define GAME_OFFSET_Y(GS_PTR)                           \
-	((GS_PTR)->scale * ((GS_PTR)->opts.border + 2)) \
+        ((GS_PTR)->scale * ((GS_PTR)->opts.border + 2)) \
 
+
+enum GameStage {
+	GAME_STAGE_INITIALIZED,
+	GAME_STAGE_STARTED,
+	GAME_STAGE_LOST,
+	GAME_STAGE_WON,
+};
 
 struct GameOptions {
 	int width;
@@ -31,11 +38,13 @@ struct GameState {
 	const struct GameOptions opts;
 	struct CellArr arr;
 	struct CellData *hovered_cell;
+	double time_started;
+	double time_ended;
+	enum GameStage stage;
+	int scale;
+	int remaining_bombs;
 	int hovered_x;
 	int hovered_y;
-	int scale;
-	bool finished;
-	bool started;
 	bool hovered_pushed;
 };
 

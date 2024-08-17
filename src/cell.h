@@ -26,6 +26,7 @@ struct CellArr {
 	struct CellData *data;
 	int width;
 	int height;
+	int untouched_count;
 };
 
 

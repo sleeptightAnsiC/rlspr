@@ -79,6 +79,7 @@ cell_setup(struct CellArr *arr_out, int w, int h)
 	}
 	arr_out->width = w;
 	arr_out->height = h;
+	arr_out->untouched_count = w * h;
 }
 
 static bool
@@ -88,6 +89,7 @@ _reveal_recur(struct CellArr *arr, int x, int y)
 	CELL_GET(arr, x, y, cd);
 	if (cd->state == CELL_STATE_UNTOUCHED) {
 		cd->state = CELL_STATE_REVEALED;
+		--(arr->untouched_count);
 		const bool bombed = cd->_bomb;
 		if (bombed) {
 			cd->hovered = true;

@@ -61,7 +61,7 @@ draw_cells(const struct GameState *gs)
 		case CELL_STATE_REVEALED: {
 
 			// HACK: unique RED background for the bomb causing a game loss
-			const Color color = (gs->finished && cd->_bomb && cd->hovered) ? (RED) : (DARKGRAY);
+			const Color color = (gs->stage == GAME_STAGE_LOST && cd->_bomb && cd->hovered) ? (RED) : (DARKGRAY);
 			DrawRectangle(rect_x, rect_y, gs->scale, gs->scale, color);
 
 			if (cd->_bomb) {
@@ -92,7 +92,7 @@ draw_cells(const struct GameState *gs)
 			DrawText(glyph, char_x, char_y, gs->scale, BLACK);
 			continue;
 		} case CELL_STATE_UNTOUCHED: {
-			if (gs->finished && cd-> _bomb)
+			if (gs->stage == GAME_STAGE_LOST && cd-> _bomb)
 				_draw_bomb(gs, x, y);
 			continue;
 		} default:
