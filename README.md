@@ -1,28 +1,42 @@
-# TODOs
-- add board (with emoji face, bomb count and time) on the top edge of the window
-- those files has been taken from mtpl project, clean them up later
-- fix issues with building Raylib while using: make CFLAGS=''
-- I don't like the fact that everything uses ambigious 'int'. This is because raylib's API uses it everywhere but I should probably take care of it
-- (in far future) once again, try to build raylib through raw C code, without using Makefile
-- (in far future) replace current draw pass with GLSL shader
+# rlspr
+Simple clone of classic Minesweeper game.\
+Created with Raylib, written in C99. \
+Try it out at: https://stacc.itch.io/rlspr
 
+# BUILDING
+Requires either POSIX or MinGW enviroment, with GNU/make and git:
+```sh
+$ git clone https://github.com/sleeptightAnsiC/rlspr --depth 1 --recursive --recurse-submodules --shallow-submodules
+$ cd rlspr
+$ make
+```
+
+# GOALs
+- Trying out raylib and testing its portability, building it for multiple systems and WEB (initial goal)
+- Imlementing most of the features from other Minesweeper clones and the original ones
+- Keeping the code as small as possible (if some feature would require a lot of code changes, it's out of the scope)
+
+# NON-GOALs
+- Beeter looks (polished functionality is the goal, not polished visuals)
+- Proper menus for changing options, kebindings, themes, colors, etc. (although, I may provide simple intermediate GUI for changing difficulty, see TODOs)
 
 # NOTEs
-- https://minesweeper-pro.com/introduction/
-- https://en.wikipedia.org/wiki/Minesweeper_(video_game)
-- https://en.wikipedia.org/wiki/Microsoft_Minesweeper
+- I implemented everything from the scratch, without any tutorials or guides. This my take on Minesweeper, I don't know how other clones work.
+- Although, I did NOT peek at any Minesweeper's implementation details, I refered to this page for the design details: https://minesweeper-pro.com/introduction/
 
+# TODOs
+- provide UI for changing difficulty and and few core options (functionality is already there, just front-end is missing)
+- provide automatic resolution scalling
+- (in far future) replace current draw pass with GLSL shader
+- (in far future) once again, try to build raylib through raw C code, without using Makefile
 
-# rlspr
-Simple (but faithful) clone of classic WindowsNT's Minesweeper game.\
-Created with Raylib, written in C99 - builds and runs everywhere, on everything!
+# FIXMEs
+- `make CFLAGS=''` will cause raylib build to fail (this is more of an issue with raylib's Makefile)
+- Although, I haven't prepered any mobile support, the WEB version can be started from mobile web browser, but it will NOT work properly. This should be either prevented or fixed by implementing gestures.
+- If a flag/question mark gets placed before starting the game, it will disappear upon revealing the first cell (this is caused by "safe first try" feature and there are multiple ways to fix it)
 
-
-# context (why rlspr has been made)
-I was looking for a reason to try Raylib for a long long time and recently,
-while I was scattering through WINE's directories on Linux,
-I've spotted a similar clone there - `C:\windows\system32\winemine.exe` -
-this trully inspired me to give it a try.
-
-In polish Windows translations this game is called "Saper" (with one "p"),
-that's why the project's name is `rlspr` as it stands for "Raylib's Saper".
+# LICENSE
+Copyright holder: https://github.com/sleeptightAnsiC \
+Code under this repository is licensed under permisive MIT/X license, \
+but this does NOT include its dependencies and git-submodules, such as raylib. \
+This repository contains the proper copy of License formula.
