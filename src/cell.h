@@ -9,11 +9,10 @@
 //
 // Utilities for managing the array of cells.
 // The whole purpose of this translations unit
-// is to abstract away the code repetitions that occured in GAME
+// was to abstract away the code repetitions that occured in GAME
 // CellArr is just a continous memory block (two-dimentional array)
-// that holds the CellData, and GAME is manipulating said data,
-// either directly or through helper functions defined by CELL.
-// Cells doesn't do anything on it's own and they're dependent on each other.
+// that holds the CellData, and GAME is manipulating said data.
+// Cells do not do anything on their own and they're dependent on each other.
 
 
 #define CELL_GET(ARR_PTR_OUT, X, Y, CELL_PTR_OUT)                \

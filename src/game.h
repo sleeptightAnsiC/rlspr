@@ -16,6 +16,7 @@
 // TODO: perhaps input and any other raylib functionality should be separated from GAME
 
 
+// TODO: This has been left here in header because it will be reused
 #define X_GAME_BINDS                                                       \
         X(IsMouseButtonDown, MOUSE_BUTTON_LEFT, game_hovered_push)         \
         X(IsMouseButtonReleased, MOUSE_BUTTON_LEFT, game_hovered_action_1) \
@@ -25,7 +26,7 @@
         X(IsKeyPressed, KEY_R, game_restart)                               \
         X(IsKeyPressed, KEY_F2, game_restart)                              \
 
-// TODO: this name is too ambigious
+// TODO: this name is too ambigious...
 #define GAME_OFFSET_Y(GS_PTR)                           \
         ((GS_PTR)->scale * ((GS_PTR)->opts.border + 1)) \
 
