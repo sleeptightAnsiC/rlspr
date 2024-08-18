@@ -17,13 +17,13 @@
         X(7, PURPLE)         \
         X(8, DARKPURPLE)     \
 
-#define _CHAR4_FROM_INT(INT_IN) \
-	{ \
-		((INT_IN) >= 0) ? (char)('0' + ((INT_IN) / 100 % 10)) : '-', \
-		((INT_IN) >= 0) ? (char)('0' + ((INT_IN) / 10 % 10)) : (char)('0' + ((INT_IN) / 10 % 10 * -1)), \
-		((INT_IN) >= 0) ? (char)('0' + ((INT_IN) % 10)) : (char)('0' + ((INT_IN) % 10 * -1)), \
-		'\0', \
-	} \
+#define _CHAR4_FROM_INT(INT_IN)                                                                                 \
+        {                                                                                                       \
+                ((INT_IN) >= 0) ? (char)('0' + ((INT_IN) / 100 % 10)) : '-',                                    \
+                ((INT_IN) >= 0) ? (char)('0' + ((INT_IN) / 10 % 10)) : (char)('0' + ((INT_IN) / 10 % 10 * -1)), \
+                ((INT_IN) >= 0) ? (char)('0' + ((INT_IN) % 10)) : (char)('0' + ((INT_IN) % 10 * -1)),           \
+                '\0',                                                                                           \
+        }                                                                                                       \
 
 
 static void _draw_bomb(const struct GameState *gs, int x, int y);
@@ -36,7 +36,7 @@ draw_board(const struct GameState *gs)
 	const int offset_y = GAME_OFFSET_Y(gs);
 	const int margin = (int)(0.2f * (float)(gs->scale));
 
-	{  // board border
+	{  // draw board border
 		const int x = (gs->scale * gs->opts.border) + margin;
 		const int y = x;
 		const int w = (gs->arr.width * gs->scale) - (2 * margin);
@@ -44,7 +44,7 @@ draw_board(const struct GameState *gs)
 		DrawRectangleLines(x, y, w, h, DARKGRAY);
 	}
 
-	{  // board timer
+	{  // draw board bombs counter
 		int time;
 		switch (gs->stage) {
 		case GAME_STAGE_INITIALIZED:
@@ -62,6 +62,14 @@ draw_board(const struct GameState *gs)
 		}
 		UTIL_ASSERT(time >= 0);
 		const char text[4] = _CHAR4_FROM_INT(time);
+		const int x = (gs->arr.width + gs->opts.border - 2) * gs->scale - margin;
+		const int y = (gs->scale * gs->opts.border) + (gs->scale / 2);
+		const int font = gs->scale;
+		DrawText(text, x, y, font, RED);
+	}
+
+	{  // draw board timer
+		const char text[4] = _CHAR4_FROM_INT(gs->remaining_bombs);
 		const int x = (gs->scale * gs->opts.border) + (gs->scale / 2);
 		const int y = x;
 		const int font = gs->scale;
