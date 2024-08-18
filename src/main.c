@@ -15,11 +15,11 @@ main(void)
 {
 	struct GameState gs = game_init();
 
-	{
+	{  // initialize Raylib's Window context
 		SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE);
-		const int win_w = (gs.opts.width + (gs.opts.border * 2)) * gs.scale;
-		const int win_h = (gs.opts.height + (gs.opts.border * 2)) * gs.scale + GAME_OFFSET_Y(&gs);
-		InitWindow(win_w, win_h, "rlspr");
+		const int w = (gs.opts.width + (gs.opts.border * 2)) * gs.scale;
+		const int h = (gs.opts.height + (gs.opts.border * 2)) * gs.scale + GAME_OFFSET_Y(&gs);
+		InitWindow(w, h, "rlspr");
 		UTIL_ASSERT(IsWindowReady());
 	}
 

@@ -5,14 +5,14 @@
 #include "./cell.h"
 
 
-#define X_GAME_BINDS                                                      \
-        X(IsMouseButtonDown, MOUSE_BUTTON_LEFT, game_hovered_push)        \
-        X(IsMouseButtonReleased, MOUSE_BUTTON_LEFT, game_hovered_reveal)  \
-        X(IsMouseButtonPressed, MOUSE_BUTTON_RIGHT, game_hovered_toggle)  \
-        X(IsKeyPressed, KEY_ENTER, game_hovered_reveal)                   \
-        X(IsKeyPressed, KEY_SPACE, game_hovered_toggle)                   \
-        X(IsKeyPressed, KEY_R, game_restart)                              \
-        X(IsKeyPressed, KEY_F2, game_restart)                             \
+#define X_GAME_BINDS                                                       \
+        X(IsMouseButtonDown, MOUSE_BUTTON_LEFT, game_hovered_push)         \
+        X(IsMouseButtonReleased, MOUSE_BUTTON_LEFT, game_hovered_action_1) \
+        X(IsMouseButtonPressed, MOUSE_BUTTON_RIGHT, game_hovered_action_2) \
+        X(IsKeyPressed, KEY_ENTER, game_hovered_action_1)                  \
+        X(IsKeyPressed, KEY_SPACE, game_hovered_action_2)                  \
+        X(IsKeyPressed, KEY_R, game_restart)                               \
+        X(IsKeyPressed, KEY_F2, game_restart)                              \
 
 
 // TODO: rename this...
@@ -46,6 +46,7 @@ struct GameState {
 	int remaining_bombs;
 	int hovered_x;
 	int hovered_y;
+	bool hovered_icon;
 	bool hovered_pushed;
 };
 
@@ -55,8 +56,8 @@ void game_deinit(struct GameState *gs);
 void game_replant(struct GameState *gs);
 void game_restart(struct GameState *gs);
 void game_rehover(struct GameState *gs);
-void game_hovered_toggle(struct GameState *gs);
-void game_hovered_reveal(struct GameState *gs);
+void game_hovered_action_1(struct GameState *gs);
+void game_hovered_action_2(struct GameState *gs);
 void game_hovered_push(struct GameState *gs);
 
 

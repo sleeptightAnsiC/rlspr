@@ -29,22 +29,22 @@
 static void _draw_bomb(const struct GameState *gs, int x, int y);
 
 
-// FIXME: there is too many magic numbers, it will probably break after messing with scale!
 void
 draw_board(const struct GameState *gs)
 {
 	const int offset_y = GAME_OFFSET_Y(gs);
 	const int margin = (int)(0.2f * (float)(gs->scale));
+	const int font_size = gs->scale;
 
-	{  // draw board border
+	{  // border
 		const int x = (gs->scale * gs->opts.border) + margin;
-		const int y = x;
+		const int y = (gs->scale * gs->opts.border) + margin;
 		const int w = (gs->arr.width * gs->scale) - (2 * margin);
 		const int h = offset_y - (2 * margin);
 		DrawRectangleLines(x, y, w, h, DARKGRAY);
 	}
 
-	{  // draw board bombs counter
+	{  // bombs counter
 		int time;
 		switch (gs->stage) {
 		case GAME_STAGE_INITIALIZED:
@@ -63,17 +63,44 @@ draw_board(const struct GameState *gs)
 		UTIL_ASSERT(time >= 0);
 		const char text[4] = _CHAR4_FROM_INT(time);
 		const int x = (gs->arr.width + gs->opts.border - 2) * gs->scale - margin;
-		const int y = (gs->scale * gs->opts.border) + (gs->scale / 2);
-		const int font = gs->scale;
-		DrawText(text, x, y, font, RED);
+		const int y = (gs->scale * gs->opts.border) + (margin * 3);
+		DrawText(text, x, y, font_size, RED);
 	}
 
-	{  // draw board timer
+	{  // icon background
+		// FIXME: code repetition - the same code checks whenever icon is being hovered
+		const int x = (gs->scale * gs->opts.border) + ((gs->arr.width + 1) / 2 * gs->scale) - (gs->scale) - margin;
+		const int y = (gs->scale * gs->opts.border) + (margin * 2);
+		const int w = (gs->scale) + (2 * margin);
+		const int h = (gs->scale) + (margin);
+		if (gs->hovered_icon && gs->hovered_pushed)
+			DrawRectangle(x, y, w, h, DARKGRAY);
+		else
+			DrawRectangleLines(x, y, w, h, DARKGRAY);
+	}
+
+	{  // icon
+		const char *icon;
+		if (gs->hovered_icon && gs->hovered_pushed)
+			icon = ":-)";
+		else if (gs->stage == GAME_STAGE_WON)
+			icon = "B)";
+		else if (gs->stage == GAME_STAGE_LOST)
+			icon = "X(";
+		else if (gs->hovered_pushed)
+			icon = ":-0";
+		else
+			icon = ":-)";
+		const int x = (gs->scale * gs->opts.border) + ((gs->arr.width + 1) / 2 * gs->scale) - (gs->scale);
+		const int y = (gs->scale * gs->opts.border) + (margin * 2) + margin;
+		DrawText(icon, x, y, font_size, YELLOW);
+	}
+
+	{  // timer
 		const char text[4] = _CHAR4_FROM_INT(gs->remaining_bombs);
 		const int x = (gs->scale * gs->opts.border) + (gs->scale / 2);
-		const int y = x;
-		const int font = gs->scale;
-		DrawText(text, x, y, font, RED);
+		const int y = (gs->scale * gs->opts.border) + (margin * 3);
+		DrawText(text, x, y, font_size, RED);
 	}
 }
 
@@ -109,16 +136,11 @@ draw_cells(const struct GameState *gs)
 		const int rect_x = (gs->opts.border + x) * gs->scale;
 		const int rect_y = (gs->opts.border + y) * gs->scale + offset_y;
 
-		if (cd == gs->hovered_cell && gs->hovered_pushed) {
-			DrawRectangle(rect_x, rect_y, gs->scale, gs->scale, DARKGRAY);
-			continue;
-		}
-
 		switch (cd->state)
 		{
 		case CELL_STATE_REVEALED: {
 
-			// HACK: unique RED background for the bomb causing a game loss
+			// HACK: unique RED background for the bomb that caused a game loss
 			const Color color = (gs->stage == GAME_STAGE_LOST && cd->_bomb && cd->hovered) ? (RED) : (DARKGRAY);
 			DrawRectangle(rect_x, rect_y, gs->scale, gs->scale, color);
 
@@ -152,6 +174,8 @@ draw_cells(const struct GameState *gs)
 		} case CELL_STATE_UNTOUCHED: {
 			if (gs->stage == GAME_STAGE_LOST && cd-> _bomb)
 				_draw_bomb(gs, x, y);
+			else if (cd == gs->hovered_cell && gs->hovered_pushed)
+				DrawRectangle(rect_x, rect_y, gs->scale, gs->scale, DARKGRAY);
 			continue;
 		} default:
 			UTIL_UNREACHABLE();
