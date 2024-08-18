@@ -6,16 +6,15 @@
 #include <stdio.h>
 
 
-// FIXME: rename this
-#define X_NUMBERS_COLORS_MAP \
-        X(1, BLUE)           \
-        X(2, GREEN)          \
-        X(3, RED)            \
-        X(4, DARKBLUE)       \
-        X(5, MAROON)         \
-        X(6, SKYBLUE)        \
-        X(7, PURPLE)         \
-        X(8, DARKPURPLE)     \
+#define _X_NEARBY_COLORS \
+        X(1, BLUE)       \
+        X(2, GREEN)      \
+        X(3, RED)        \
+        X(4, DARKBLUE)   \
+        X(5, MAROON)     \
+        X(6, SKYBLUE)    \
+        X(7, PURPLE)     \
+        X(8, DARKPURPLE) \
 
 #define _CHAR4_FROM_INT(INT_IN)                                                                                 \
         {                                                                                                       \
@@ -156,7 +155,7 @@ draw_cells(const struct GameState *gs)
 				DrawText(#NEARBY, char_x, char_y, gs->scale, COLOR); \
 				continue;                                            \
 				;                                                    
-				X_NUMBERS_COLORS_MAP
+				_X_NEARBY_COLORS
 #				undef X
 			case 0:
 				continue;
@@ -164,7 +163,7 @@ draw_cells(const struct GameState *gs)
 				UTIL_UNREACHABLE();
 			}
 
-			continue;
+			UTIL_UNREACHABLE();
 
 		} case CELL_STATE_QUESTIONED: {
 		} case CELL_STATE_FLAGGED: {
@@ -178,11 +177,24 @@ draw_cells(const struct GameState *gs)
 			}
 			continue;
 		} case CELL_STATE_UNTOUCHED: {
-			if (gs->stage == GAME_STAGE_LOST && cd-> _bomb)
+
+			if (gs->stage == GAME_STAGE_LOST && cd-> _bomb) {
 				_draw_bomb(gs, x, y);
-			else if (cd == gs->hovered_cell && gs->hovered_pushed)
+				continue;
+			}
+
+			const bool pushable = 
+				true
+				&& gs->stage != GAME_STAGE_WON
+				&& gs->stage != GAME_STAGE_LOST
+				&& cd == gs->hovered_cell
+				&& gs->hovered_pushed
+				;
+			if (pushable)
 				DrawRectangle(rect_x, rect_y, gs->scale, gs->scale, DARKGRAY);
+
 			continue;
+
 		} default:
 			UTIL_UNREACHABLE();
 		} //end switch

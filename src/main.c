@@ -1,9 +1,5 @@
-#include <assert.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include "raylib.h"
-#include "./util.h"
 #include "./game.h"
 #include "./draw.h"
 
@@ -18,7 +14,6 @@ main(void)
 		const int w = (gs.opts.width + (gs.opts.border * 2)) * gs.scale;
 		const int h = (gs.opts.height + (gs.opts.border * 2)) * gs.scale + GAME_OFFSET_Y(&gs);
 		InitWindow(w, h, "rlspr");
-		UTIL_ASSERT(IsWindowReady());
 	}
 
 	while (!WindowShouldClose())

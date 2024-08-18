@@ -4,7 +4,7 @@
 #include <assert.h>
 
 
-// TODO: disable assertions and other similar macros in shipping builds
+// TODO: disable assertions and debug-only macros in shipping builds
 
 #define UTIL_ASSERT(COND) assert(COND)
 
