@@ -27,6 +27,7 @@ main(void)
 	{
 		game_rehover(&gs);
 
+		// handle game binds
 #		define X(FUNC, KEY, EVENT) \
 		if (FUNC(KEY)) EVENT(&gs)  \
 		;                           
@@ -35,6 +36,7 @@ main(void)
 
 		BeginDrawing();
 		ClearBackground(GRAY);
+		draw_board(&gs);
 		draw_cells(&gs);
 		draw_borders(&gs);
 		EndDrawing();

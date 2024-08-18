@@ -15,8 +15,9 @@
         X(IsKeyPressed, KEY_F2, game_restart)                             \
 
 
+// TODO: rename this...
 #define GAME_OFFSET_Y(GS_PTR)                           \
-        ((GS_PTR)->scale * ((GS_PTR)->opts.border + 2)) \
+        ((GS_PTR)->scale * ((GS_PTR)->opts.border + 1)) \
 
 
 enum GameStage {

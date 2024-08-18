@@ -3,8 +3,10 @@
 #include "./game.h"
 #include "./cell.h"
 #include "raylib.h"
+#include <stdio.h>
 
 
+// FIXME: rename this
 #define X_NUMBERS_COLORS_MAP \
         X(1, BLUE)           \
         X(2, GREEN)          \
@@ -15,9 +17,57 @@
         X(7, PURPLE)         \
         X(8, DARKPURPLE)     \
 
+#define _CHAR4_FROM_INT(INT_IN) \
+	{ \
+		((INT_IN) >= 0) ? (char)('0' + ((INT_IN) / 100 % 10)) : '-', \
+		((INT_IN) >= 0) ? (char)('0' + ((INT_IN) / 10 % 10)) : (char)('0' + ((INT_IN) / 10 % 10 * -1)), \
+		((INT_IN) >= 0) ? (char)('0' + ((INT_IN) % 10)) : (char)('0' + ((INT_IN) % 10 * -1)), \
+		'\0', \
+	} \
+
 
 static void _draw_bomb(const struct GameState *gs, int x, int y);
 
+
+// FIXME: there is too many magic numbers, it will probably break after messing with scale!
+void
+draw_board(const struct GameState *gs)
+{
+	const int offset_y = GAME_OFFSET_Y(gs);
+	const int margin = (int)(0.2f * (float)(gs->scale));
+
+	{  // board border
+		const int x = (gs->scale * gs->opts.border) + margin;
+		const int y = x;
+		const int w = (gs->arr.width * gs->scale) - (2 * margin);
+		const int h = offset_y - (2 * margin);
+		DrawRectangleLines(x, y, w, h, DARKGRAY);
+	}
+
+	{  // board timer
+		int time;
+		switch (gs->stage) {
+		case GAME_STAGE_INITIALIZED:
+			time = 0;
+			break;
+		case GAME_STAGE_STARTED:
+			time = (int)(GetTime() - gs->time_started);
+			break;
+		case GAME_STAGE_WON:
+		case GAME_STAGE_LOST:
+			time = (int)(gs->time_ended - gs->time_started);
+			break;
+		default:
+			UTIL_UNREACHABLE();
+		}
+		UTIL_ASSERT(time >= 0);
+		const char text[4] = _CHAR4_FROM_INT(time);
+		const int x = (gs->scale * gs->opts.border) + (gs->scale / 2);
+		const int y = x;
+		const int font = gs->scale;
+		DrawText(text, x, y, font, RED);
+	}
+}
 
 void
 draw_borders(const struct GameState *gs)
