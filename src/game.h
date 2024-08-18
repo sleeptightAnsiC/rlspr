@@ -8,9 +8,9 @@
 //
 // Manages and manipulates the GameState.
 // GAME does not perform any visualization/drawing on its own,
-// and can be run headless. However, it dependes on input system from raylib
+// and can be run headless. However, it depends on input system from raylib
 // and requires window context to be initialized accordingly.
-// GameState and GameOptions also contain few members which the only pusrpose if for visualization,
+// GameState and GameOptions also contain few members which the only purpose if for visualization,
 // but the GAME itself does not do anything with them (other than managing their states).
 //
 // TODO: perhaps input and any other raylib functionality should be separated from GAME
@@ -26,7 +26,7 @@
         X(IsKeyPressed, KEY_R, game_restart)                               \
         X(IsKeyPressed, KEY_F2, game_restart)                              \
 
-// TODO: this name is too ambigious...
+// TODO: this name is too ambiguous...
 #define GAME_OFFSET_Y(GS_PTR)                           \
         ((GS_PTR)->scale * ((GS_PTR)->opts.border + 1)) \
 

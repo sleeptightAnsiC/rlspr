@@ -9,8 +9,8 @@
 //
 // Utilities for managing the array of cells.
 // The whole purpose of this translations unit
-// was to abstract away the code repetitions that occured in GAME
-// CellArr is just a continous memory block (two-dimentional array)
+// was to abstract away the code repetitions that occurred in GAME
+// CellArr is just a continuous memory block (two-dimensional array)
 // that holds the CellData, and GAME is manipulating said data.
 // Cells do not do anything on their own and they're dependent on each other.
 
