@@ -1,11 +1,9 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 #include "raylib.h"
 #include "./util.h"
-#include "./cell.h"
 #include "./game.h"
 #include "./draw.h"
 
@@ -15,7 +13,7 @@ main(void)
 {
 	struct GameState gs = game_init();
 
-	{  // initialize Raylib's Window context
+	{
 		SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE);
 		const int w = (gs.opts.width + (gs.opts.border * 2)) * gs.scale;
 		const int h = (gs.opts.height + (gs.opts.border * 2)) * gs.scale + GAME_OFFSET_Y(&gs);
@@ -26,23 +24,16 @@ main(void)
 	while (!WindowShouldClose())
 	{
 		game_rehover(&gs);
-
-		// handle game binds
-#		define X(FUNC, KEY, EVENT) \
-		if (FUNC(KEY)) EVENT(&gs)  \
-		;                           
-		X_GAME_BINDS
-#		undef X
-
+		game_handle_binds(&gs);
 		BeginDrawing();
-		ClearBackground(GRAY);
-		draw_board(&gs);
-		draw_cells(&gs);
-		draw_borders(&gs);
+			ClearBackground(GRAY);
+			draw_board(&gs);
+			draw_cells(&gs);
+			draw_borders(&gs);
 		EndDrawing();
 	}
 
-	game_deinit(&gs);
 	CloseWindow();
+	game_deinit(&gs);
 	return EXIT_SUCCESS;
 }

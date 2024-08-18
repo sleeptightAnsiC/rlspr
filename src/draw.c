@@ -168,8 +168,14 @@ draw_cells(const struct GameState *gs)
 
 		} case CELL_STATE_QUESTIONED: {
 		} case CELL_STATE_FLAGGED: {
-			const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
-			DrawText(glyph, char_x, char_y, gs->scale, BLACK);
+			if (gs->stage == GAME_STAGE_LOST && cd->_bomb == false) {
+				_draw_bomb(gs, x, y);
+				DrawLine(rect_x, rect_y, rect_x + gs->scale, rect_y + gs->scale, RED);
+				DrawLine(rect_x, rect_y + gs->scale, rect_x + gs->scale, rect_y, RED);
+			} else {
+				const char *glyph = (cd->state == CELL_STATE_FLAGGED) ? "F" : "?";
+				DrawText(glyph, char_x, char_y, gs->scale, BLACK);
+			}
 			continue;
 		} case CELL_STATE_UNTOUCHED: {
 			if (gs->stage == GAME_STAGE_LOST && cd-> _bomb)

@@ -39,7 +39,7 @@ game_rehover(struct GameState *gs)
 	gs->hovered_x = -1;
 	gs->hovered_y = -1;
 	gs->hovered_icon = false;
-	// HACK: when the game is lost, CellData:hovered is used to highilght the bomb that caused the loss
+	// HACK: when the game is lost, CellData:hovered is used to highlight the bomb that caused the loss
 	if (gs->hovered_cell != NULL && gs->stage != GAME_STAGE_LOST)
 		gs->hovered_cell->hovered = false;
 	gs->hovered_cell = NULL;
@@ -48,7 +48,7 @@ game_rehover(struct GameState *gs)
 	const int mouse_y = GetMouseY();
 
 	{  // check if board icon is being hovered
-		// FIXME: code repetition - the same code draws board's icon border
+		// FIXME: code repetition - the same code draws board's icon background
 		const int margin = (int)(0.2f * (float)(gs->scale));
 		const int x = (gs->scale * gs->opts.border) + ((gs->arr.width + 1) / 2 * gs->scale) - (gs->scale) - margin;
 		const int y = (gs->scale * gs->opts.border) + (margin * 2);
@@ -63,6 +63,7 @@ game_rehover(struct GameState *gs)
 			;
 	}
 
+	// WARN: early return
 	if (gs->hovered_icon)
 		return;
 
@@ -97,7 +98,7 @@ game_replant(struct GameState *gs)
 	}
 }
 
-// TODO: part of this function probably should be moved to cell.c (cell_toggle)
+// TODO: part of this function probably should be moved to cell.c (cell_action_2)
 void
 game_hovered_action_2(struct GameState *gs)
 {
@@ -167,7 +168,7 @@ game_hovered_action_1(struct GameState *gs)
 		gs->time_started = GetTime();
 	}
 
-	const bool blown = cell_reveal(&gs->arr, gs->hovered_x, gs->hovered_y);
+	const bool blown = cell_action_1(&gs->arr, gs->hovered_x, gs->hovered_y);
 	if (blown) {
 		gs->stage = GAME_STAGE_LOST;
 		gs->time_ended = GetTime();
@@ -175,6 +176,14 @@ game_hovered_action_1(struct GameState *gs)
 		gs->stage = GAME_STAGE_WON;
 		gs->time_ended = GetTime();
 	}
+}
+
+void game_handle_binds(struct GameState *gs)
+{
+	if (false);
+#	define X(FUNC, KEY, EVENT) else if (FUNC(KEY)) { EVENT(gs); }
+	X_GAME_BINDS
+#	undef X
 }
 
 void

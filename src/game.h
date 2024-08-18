@@ -4,6 +4,17 @@
 #include <stdbool.h>
 #include "./cell.h"
 
+//     GAME
+//
+// Manages and manipulates the GameState.
+// GAME does not perform any visualization/drawing on its own,
+// and can be run headless. However, it dependes on input system from raylib
+// and requires window context to be initialized accordingly.
+// GameState and GameOptions also contain few members which the only pusrpose if for visualization,
+// but the GAME itself does not do anything with them (other than managing their states).
+//
+// TODO: perhaps input and any other raylib functionality should be separated from GAME
+
 
 #define X_GAME_BINDS                                                       \
         X(IsMouseButtonDown, MOUSE_BUTTON_LEFT, game_hovered_push)         \
@@ -14,8 +25,7 @@
         X(IsKeyPressed, KEY_R, game_restart)                               \
         X(IsKeyPressed, KEY_F2, game_restart)                              \
 
-
-// TODO: rename this...
+// TODO: this name is too ambigious
 #define GAME_OFFSET_Y(GS_PTR)                           \
         ((GS_PTR)->scale * ((GS_PTR)->opts.border + 1)) \
 
@@ -56,6 +66,7 @@ void game_deinit(struct GameState *gs);
 void game_replant(struct GameState *gs);
 void game_restart(struct GameState *gs);
 void game_rehover(struct GameState *gs);
+void game_handle_binds(struct GameState *gs);
 void game_hovered_action_1(struct GameState *gs);
 void game_hovered_action_2(struct GameState *gs);
 void game_hovered_push(struct GameState *gs);

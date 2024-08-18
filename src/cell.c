@@ -5,8 +5,7 @@
 #include "./util.h"
 
 
-// https://www.reddit.com/r/cprogramming/comments/1ekzyzu/comment/lgsv11a/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-#define _FOREACH_AROUND(ARR, X, Y, IT_X, IT_Y)                  \
+#define _CELL__FOREACH_AROUND(ARR, X, Y, IT_X, IT_Y)            \
         for (                                                   \
                 int IT_X = UTIL_MAX(0, (X - 1));                \
                 IT_X <= UTIL_MIN(((ARR)->width - 1), (X + 1));  \
@@ -18,28 +17,28 @@
         ) if (X == IT_X && Y == IT_Y); else                     \
 
 
-static bool _reveal_recur(struct CellArr *arr, int x, int y);
+static bool _cell_reveal_recur(struct CellArr *arr, int x, int y);
 
 
 bool
-cell_reveal(struct CellArr *arr, int x, int y)
+cell_action_1(struct CellArr *arr, int x, int y)
 {
 	struct CellData *cd;
 	CELL_GET(arr, x, y, cd);
 	bool bomb_hit = false;
 	if (cd->state == CELL_STATE_UNTOUCHED) {
-		bomb_hit = _reveal_recur(arr, x, y);
+		bomb_hit = _cell_reveal_recur(arr, x, y);
 	} else if (cd->state == CELL_STATE_REVEALED) {
 		int flags = 0;
-		_FOREACH_AROUND(arr, x, y, it_x, it_y) {
+		_CELL__FOREACH_AROUND(arr, x, y, it_x, it_y) {
 			const struct CellData *it_cd;
 			CELL_GET(arr, it_x, it_y, it_cd);
 			if (it_cd->state == CELL_STATE_FLAGGED)
 				++flags;
 		}
 		if (flags == cd->_nearby) {
-			_FOREACH_AROUND(arr, x, y, it_x, it_y) {
-				const bool it_bombed = _reveal_recur(arr, it_x, it_y);
+			_CELL__FOREACH_AROUND(arr, x, y, it_x, it_y) {
+				const bool it_bombed = _cell_reveal_recur(arr, it_x, it_y);
 				if (it_bombed)
 					bomb_hit = true;
 			}
@@ -56,7 +55,7 @@ cell_plant(struct CellArr *arr, int x, int y)
 	UTIL_ASSERT(!cd->_bomb);
 	cd->_bomb = true;
 	++(cd->_nearby);
-	_FOREACH_AROUND(arr, x, y, it_x, it_y) {
+	_CELL__FOREACH_AROUND(arr, x, y, it_x, it_y) {
 		struct CellData *it_cd;
 		CELL_GET(arr, it_x, it_y, it_cd);
 		++(it_cd->_nearby);
@@ -83,7 +82,7 @@ cell_setup(struct CellArr *arr_out, int w, int h)
 }
 
 static bool
-_reveal_recur(struct CellArr *arr, int x, int y)
+_cell_reveal_recur(struct CellArr *arr, int x, int y)
 {
 	struct CellData *cd;
 	CELL_GET(arr, x, y, cd);
@@ -96,8 +95,8 @@ _reveal_recur(struct CellArr *arr, int x, int y)
 			return true;
 		}
 		if (cd->_nearby == 0 && !bombed) {
-			_FOREACH_AROUND(arr, x, y, it_x, it_y) {
-				const bool it_bombed = _reveal_recur(arr, it_x, it_y);
+			_CELL__FOREACH_AROUND(arr, x, y, it_x, it_y) {
+				const bool it_bombed = _cell_reveal_recur(arr, it_x, it_y);
 				if (it_bombed)
 					return true;
 			}

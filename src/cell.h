@@ -5,6 +5,28 @@
 #include <stdint.h>
 #include "./util.h"
 
+//     CELL
+//
+// Utilities for managing the array of cells.
+// The whole purpose of this translations unit
+// is to abstract away the code repetitions that occured in GAME
+// CellArr is just a continous memory block (two-dimentional array)
+// that holds the CellData, and GAME is manipulating said data,
+// either directly or through helper functions defined by CELL.
+// Cells doesn't do anything on it's own and they're dependent on each other.
+
+
+#define CELL_GET(ARR_PTR_OUT, X, Y, CELL_PTR_OUT)                \
+        do {                                                     \
+                UTIL_ASSERT((ARR_PTR_OUT) != 0);                 \
+                UTIL_ASSERT(X >= 0);                             \
+                UTIL_ASSERT(Y >= 0);                             \
+                UTIL_ASSERT(X < (ARR_PTR_OUT)->width);           \
+                UTIL_ASSERT(Y < (ARR_PTR_OUT)->height);          \
+                const int _idx = (Y * (ARR_PTR_OUT)->width) + X; \
+                CELL_PTR_OUT =  (ARR_PTR_OUT)->data + _idx;      \
+        } while(0)                                               \
+
 
 enum CellState {
 	CELL_STATE_UNTOUCHED = 0,
@@ -17,7 +39,8 @@ struct CellData {
 	uint8_t _nearby : 4;
 	uint8_t state : 2;
 	bool _bomb : 1;
-	// FIXME: this should have a different name
+	// TODO: this should have a different name
+	// since it's also set to 'true' when a cell causes the game loss
 	bool hovered : 1;
 };
 UTIL_STATIC_ASSERT(sizeof(struct CellData) == 1);
@@ -30,22 +53,10 @@ struct CellArr {
 };
 
 
-#define CELL_GET(ARR_PTR_OUT, X, Y, CELL_PTR_OUT)        \
-do {                                                     \
-        UTIL_ASSERT((ARR_PTR_OUT) != 0);                 \
-        UTIL_ASSERT(X >= 0);                             \
-        UTIL_ASSERT(Y >= 0);                             \
-        UTIL_ASSERT(X < (ARR_PTR_OUT)->width);           \
-        UTIL_ASSERT(Y < (ARR_PTR_OUT)->height);          \
-        const int _idx = (Y * (ARR_PTR_OUT)->width) + X; \
-        CELL_PTR_OUT =  (ARR_PTR_OUT)->data + _idx;      \
-} while(0)                                               \
-
-
 void cell_setup(struct CellArr *arr_out, int w, int h);
+bool cell_action_1(struct CellArr *arr, int x, int y);
+void cell_action_2(struct CellArr *arr, int x, int y);
 void cell_plant(struct CellArr *arr, int x, int y);
-void cell_toggle(struct CellArr *arr, int x, int y);
-bool cell_reveal(struct CellArr *arr, int x, int y);
 
 
 #endif
