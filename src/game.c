@@ -8,6 +8,15 @@
 struct GameState
 game_init(void)
 {
+	// WARN: CellArr has to be initialized because cell_setup expects it
+	const struct CellArr arr = { .data = NULL };
+	const struct GameState out = { .arr = arr, };
+	return out;
+}
+
+void
+game_setup(struct GameState *gs)
+{
 	const struct GameOptions opts = {
 		.width = 9,
 		.height = 9,
@@ -15,21 +24,16 @@ game_init(void)
 		.border = 1,
 		.safe_first_try = true,
 	};
-	const struct CellArr arr = { .data = NULL };
-	struct GameState out = {
-		.opts = opts,
-		.arr = arr,
-		.scale = 50,
-		.stage = GAME_STAGE_INITIALIZED,
-		.hovered_cell = NULL,
-		.remaining_bombs = opts.bombs,
-		.hovered_x = -1,
-		.hovered_y = -1,
-		.hovered_icon = false,
-		.hovered_pushed = false,
-	};
-	game_replant(&out);
-	return out;
+	gs->opts = opts,
+	gs->scale = 50,
+	gs->stage = GAME_STAGE_INITIALIZED,
+	gs->hovered_cell = NULL,
+	gs->remaining_bombs = opts.bombs,
+	gs->hovered_x = -1,
+	gs->hovered_y = -1,
+	gs->hovered_icon = false,
+	gs->hovered_pushed = false,
+	game_replant(gs);
 }
 
 void
@@ -195,14 +199,12 @@ game_hovered_push(struct GameState *gs)
 void
 game_restart(struct GameState *gs)
 {
-	gs->stage = GAME_STAGE_INITIALIZED;
-	gs->remaining_bombs = gs->opts.bombs;
+	game_setup(gs);
 	game_rehover(gs);
-	game_replant(gs);
 }
 
 void
-game_deinit(struct GameState *gs)
+game_free(struct GameState *gs)
 {
 	free(gs->arr.data);
 	gs->arr.data = NULL;

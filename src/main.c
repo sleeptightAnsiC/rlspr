@@ -8,6 +8,7 @@ int
 main(void)
 {
 	struct GameState gs = game_init();
+	game_setup(&gs);
 
 	{
 		SetConfigFlags(FLAG_VSYNC_HINT + FLAG_WINDOW_RESIZABLE);
@@ -29,6 +30,6 @@ main(void)
 	}
 
 	CloseWindow();
-	game_deinit(&gs);
+	game_free(&gs);
 	return EXIT_SUCCESS;
 }

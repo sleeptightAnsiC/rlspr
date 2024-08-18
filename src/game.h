@@ -47,7 +47,7 @@ struct GameOptions {
 };
 
 struct GameState {
-	const struct GameOptions opts;
+	struct GameOptions opts;
 	struct CellArr arr;
 	struct CellData *hovered_cell;
 	double time_started;
@@ -63,7 +63,8 @@ struct GameState {
 
 
 struct GameState game_init(void);
-void game_deinit(struct GameState *gs);
+void game_setup(struct GameState *gs);
+void game_free(struct GameState *gs);
 void game_replant(struct GameState *gs);
 void game_restart(struct GameState *gs);
 void game_rehover(struct GameState *gs);
