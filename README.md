@@ -4,9 +4,9 @@ Created with Raylib, written in C99. \
 Try it out at: https://stacc.itch.io/rlspr
 
 <p float="left">
-  <img src="https://github.com/user-attachments/assets/fe26e5df-6aa5-4c39-a7f4-0ca5539405d4" width="20%" />
-  <img src="https://github.com/user-attachments/assets/6905ad75-b863-48cf-8023-e9f0674746a8" width="20%" />
-  <img src="https://github.com/user-attachments/assets/c370d7db-130d-4414-b39d-646ee8ab2afb" width="20%" />
+  <img src="https://github.com/user-attachments/assets/fe26e5df-6aa5-4c39-a7f4-0ca5539405d4" width="33%" />
+  <img src="https://github.com/user-attachments/assets/6905ad75-b863-48cf-8023-e9f0674746a8" width="33%" />
+  <img src="https://github.com/user-attachments/assets/c370d7db-130d-4414-b39d-646ee8ab2afb" width="33%" />
 </p>
 
 
