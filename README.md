@@ -1,7 +1,10 @@
 # rlspr
-Simple clone of classic Minesweeper game.\
+Simple (yet feature-rich) clone of classic Minesweeper game. \
 Created with Raylib, written in C99. \
 Try it out at: https://stacc.itch.io/rlspr
+
+![image](https://github.com/user-attachments/assets/c370d7db-130d-4414-b39d-646ee8ab2afb)
+
 
 # BUILDING
 Requires either POSIX or MinGW environment, with GNU/make and git:
