@@ -21,7 +21,7 @@ $ make
 - Proper menus for changing options, keybindings, themes, colors, etc. (although, I may provide simple intermediate GUI for changing difficulty, see TODOs)
 
 # NOTEs
-- I implemented everything from the scratch, without any tutorials or guides. This my take on Minesweeper, I don't know how other clones work.
+- I implemented everything from the scratch, without any tutorials or guides. This is my take on Minesweeper implementation.
 - Although, I did NOT peek at any Minesweeper's implementation details, I referenced to this page for the design details: https://minesweeper-pro.com/introduction/
 
 # TODOs

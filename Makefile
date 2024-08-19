@@ -1,7 +1,7 @@
 
-# CC = cc
+CC = cc
 # CC = c99
-CC = gcc
+# CC = gcc
 # CC = clang
 # CC = tcc
 
@@ -16,11 +16,11 @@ OBJS = $(patsubst $(SRCDIR)/%.c,$(TMPDIR)/%.o,$(SRCS))
 EXE = $(BINDIR)/rlspr
 
 # CFLAGS = @./$(RCPDIR)/flags_cc.txt
-CFLAGS = @./$(RCPDIR)/flags_gcc.txt
+# CFLAGS = @./$(RCPDIR)/flags_gcc.txt
 # CFLAGS = @./$(RCPDIR)/flags_clang.txt
 # CFLAGS = @./$(RCPDIR)/flags_tcc.txt
 
-SANDBOX = $(shell cat $(RCPDIR)/sandbox_gdb.txt)
+# SANDBOX = $(shell cat $(RCPDIR)/sandbox_gdb.txt)
 # SANDBOX = $(shell cat $(RCPDIR)/sandbox_valgrind.txt)
 
 
